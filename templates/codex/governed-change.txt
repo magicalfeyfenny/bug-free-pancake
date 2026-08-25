@@ -1,0 +1,39 @@
+Use the governed-change skill for this repository.
+
+This is a scheduled run. The skill's direct-request issue-creation permission
+does not apply.
+
+Before modifying repository state, inspect live open GitHub issues and select
+at most one eligible issue. An issue is eligible only when:
+
+- it defines one independently meaningful product or repository outcome under
+  Issue authority, with actionable acceptance criteria and bounded scope;
+- it is unassigned or assigned to the automation's current user;
+- it is not labeled `work:blocked` and has no unresolved dependency;
+- it has no existing implementation branch or open pull request;
+- it is not human-owned or associated with a `human/*` branch or a
+  `human-created` change;
+- it requires no release, publication, destructive action, or other fresh
+  human authority beyond the governed-change workflow's standing permissions.
+
+Prefer the oldest eligible issue unless explicit priority or dependency data
+establishes a different order.
+
+Immediately before starting governed work, recheck every eligibility
+condition. If a branch, pull request, blocker, dependency, assignment,
+ownership, or authority requirement has changed, report that the candidate is
+no longer eligible and stop without modifying repository state.
+
+If no eligible issue exists, do not create a replacement issue or modify
+repository state. Report that no candidate was available and stop.
+
+After selecting and rechecking one issue, execute only that issue with the
+skill and its routed Governance sections. Do not absorb unrelated fixes.
+
+Return:
+
+- selected issue;
+- branch;
+- draft pull request;
+- validation state;
+- remaining blocker or required human action.

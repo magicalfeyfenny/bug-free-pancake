@@ -1,0 +1,48 @@
+name: Work item
+description: Define one coherent repository outcome.
+labels: []
+assignees: []
+
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What should change?
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance
+      description: What observable behavior, capability, or required invariant establishes completion? Describe implementation details only when they are part of the requested contract.
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: One independently meaningful outcome and its boundaries. Include all technical layers needed to deliver that outcome. Split only independently valuable outcomes.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: expected-risk
+    attributes:
+      label: Expected risk
+      description: Classify this issue's own scope; do not inherit risk from a parent issue.
+      options:
+        - Low
+        - High
+    validations:
+      required: true
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Prior implementations, designs, related issues, or source evidence.
+    validations:
+      required: false

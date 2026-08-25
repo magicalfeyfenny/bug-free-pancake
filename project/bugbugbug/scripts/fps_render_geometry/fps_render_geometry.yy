@@ -1,0 +1,13 @@
+{
+  "$GMScript":"v1",
+  "%Name":"fps_render_geometry",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"fps_render_geometry",
+  "parent":{
+    "name":"Gameplay",
+    "path":"folders/Gameplay.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}

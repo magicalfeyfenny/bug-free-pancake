@@ -36,21 +36,35 @@ gpu_set_cullmode(cull_noculling);
 
 vertex_submit(arena_buffer, pr_trianglelist, -1);
 
-var _enemy = instance_find(obj_fps_enemy, 0);
-if (
-	instance_exists(_enemy)
-	&& variable_instance_exists(_enemy, "initialized")
-	&& _enemy.initialized
-	&& _enemy.alive
-) {
-	var _enemy_mesh = _enemy.hit_flash_frames > 0 ? enemy_hit_buffer : enemy_buffer;
+var _enemy_count = instance_number(obj_fps_enemy);
+for (var _enemy_index = 0; _enemy_index < _enemy_count; _enemy_index += 1) {
+	var _enemy = instance_find(obj_fps_enemy, _enemy_index);
+	if (
+		!instance_exists(_enemy)
+		|| !variable_instance_exists(_enemy, "initialized")
+		|| !_enemy.initialized
+		|| !_enemy.alive
+	) {
+		continue;
+	}
+
+	var _body_mesh = enemy_buffer;
+	var _accent_mesh = enemy_buffer;
+	if (_enemy.enemy_kind == FPS_ENEMY_KIND_RANGED) {
+		_body_mesh = ranged_enemy_buffer;
+		_accent_mesh = ranged_enemy_accent_buffer;
+	}
+	if (_enemy.hit_flash_frames > 0) {
+		_body_mesh = enemy_hit_buffer;
+		_accent_mesh = enemy_hit_buffer;
+	}
 
 	matrix_set(
 		matrix_world,
 		matrix_build(
 			_enemy.x,
 			_enemy.y,
-			0,
+			_enemy.body_z,
 			0,
 			0,
 			0,
@@ -59,23 +73,65 @@ if (
 			_enemy.body_height
 		)
 	);
-	vertex_submit(_enemy_mesh, pr_trianglelist, -1);
+	vertex_submit(_body_mesh, pr_trianglelist, -1);
+
+	if (_enemy.shoulder_width > 0) {
+		matrix_set(
+			matrix_world,
+			matrix_build(
+				_enemy.x,
+				_enemy.y,
+				_enemy.shoulder_z,
+				0,
+				0,
+				0,
+				_enemy.shoulder_width,
+				_enemy.shoulder_depth,
+				_enemy.shoulder_height
+			)
+		);
+		vertex_submit(_accent_mesh, pr_trianglelist, -1);
+	}
 
 	matrix_set(
 		matrix_world,
 		matrix_build(
 			_enemy.x,
 			_enemy.y,
-			_enemy.body_height,
+			_enemy.body_z + _enemy.body_height,
 			0,
 			0,
 			0,
 			_enemy.head_size,
 			_enemy.head_size,
-			_enemy.head_size
+			_enemy.head_height
 		)
 	);
-	vertex_submit(_enemy_mesh, pr_trianglelist, -1);
+	vertex_submit(_accent_mesh, pr_trianglelist, -1);
+}
+
+var _projectile_count = instance_number(obj_fps_enemy_projectile);
+for (var _projectile_index = 0; _projectile_index < _projectile_count; _projectile_index += 1) {
+	var _projectile = instance_find(obj_fps_enemy_projectile, _projectile_index);
+	if (!instance_exists(_projectile)) {
+		continue;
+	}
+
+	matrix_set(
+		matrix_world,
+		matrix_build(
+			_projectile.x,
+			_projectile.y,
+			_projectile.flight_height,
+			0,
+			0,
+			_projectile.direction_angle,
+			_projectile.body_length,
+			_projectile.body_width,
+			_projectile.body_width
+		)
+	);
+	vertex_submit(enemy_projectile_buffer, pr_trianglelist, -1);
 }
 
 gpu_pop_state();

@@ -59,14 +59,20 @@ if (mouse_check_button_pressed(mb_left) && weapon_cooldown <= 0) {
 	var _direction_x = lengthdir_x(_horizontal_length, yaw);
 	var _direction_y = lengthdir_y(_horizontal_length, yaw);
 	var _direction_z = dsin(pitch);
-	var _enemy = instance_find(obj_fps_enemy, 0);
+	var _nearest_enemy = noone;
+	var _nearest_hit_distance = weapon_range + 1;
+	var _enemy_count = instance_number(obj_fps_enemy);
+	for (var _enemy_index = 0; _enemy_index < _enemy_count; _enemy_index += 1) {
+		var _enemy = instance_find(obj_fps_enemy, _enemy_index);
+		if (
+			!instance_exists(_enemy)
+			|| !variable_instance_exists(_enemy, "initialized")
+			|| !_enemy.initialized
+			|| !_enemy.alive
+		) {
+			continue;
+		}
 
-	if (
-		instance_exists(_enemy)
-		&& variable_instance_exists(_enemy, "initialized")
-		&& _enemy.initialized
-		&& _enemy.alive
-	) {
 		var _hit_distance = fps_ray_sphere_distance(
 			x,
 			y,
@@ -81,9 +87,14 @@ if (mouse_check_button_pressed(mb_left) && weapon_cooldown <= 0) {
 			weapon_range
 		);
 
-		if (_hit_distance >= 0) {
-			_enemy.take_damage(weapon_damage);
-			hit_marker_frames = 6;
+		if (_hit_distance >= 0 && _hit_distance < _nearest_hit_distance) {
+			_nearest_enemy = _enemy;
+			_nearest_hit_distance = _hit_distance;
 		}
+	}
+
+	if (instance_exists(_nearest_enemy)) {
+		_nearest_enemy.take_damage(weapon_damage);
+		hit_marker_frames = 6;
 	}
 }

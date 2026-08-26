@@ -3,4 +3,7 @@ window_set_cursor(cr_default);
 vertex_delete_buffer(arena_buffer);
 vertex_delete_buffer(enemy_buffer);
 vertex_delete_buffer(enemy_hit_buffer);
+vertex_delete_buffer(ranged_enemy_buffer);
+vertex_delete_buffer(ranged_enemy_accent_buffer);
+vertex_delete_buffer(enemy_projectile_buffer);
 vertex_format_delete(geometry_format);

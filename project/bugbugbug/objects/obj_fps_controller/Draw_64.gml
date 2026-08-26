@@ -18,24 +18,41 @@ draw_rectangle(40, 53, 40 + 270 * current_health / max_health, 69, false);
 draw_set_color(c_white);
 draw_text(40, 34, "VITALS  " + string(current_health) + " / " + string(max_health));
 
-var _enemy = instance_find(obj_fps_enemy, 0);
-if (
-	instance_exists(_enemy)
-	&& variable_instance_exists(_enemy, "initialized")
-	&& _enemy.initialized
-	&& _enemy.alive
-) {
+var _enemy_count = instance_number(obj_fps_enemy);
+for (var _enemy_index = 0; _enemy_index < _enemy_count; _enemy_index += 1) {
+	var _enemy = instance_find(obj_fps_enemy, _enemy_index);
+	if (
+		!instance_exists(_enemy)
+		|| !variable_instance_exists(_enemy, "initialized")
+		|| !_enemy.initialized
+		|| !_enemy.alive
+	) {
+		continue;
+	}
+
+	var _is_ranged = _enemy.enemy_kind == FPS_ENEMY_KIND_RANGED;
+	var _label_y = _is_ranged ? 86 : 34;
+	var _bar_y = _is_ranged ? 105 : 53;
+	var _hostile_name = _is_ranged ? "SKIRMISHER" : "CHASER";
+	var _health_colour = _is_ranged
+		? make_color_rgb(122, 104, 238)
+		: make_color_rgb(225, 51, 89);
+
 	draw_set_halign(fa_right);
 	draw_set_color(c_white);
-	draw_text(_gui_width - 40, 34, "HOSTILE  " + string(_enemy.current_health) + " / " + string(_enemy.max_health));
+	draw_text(
+		_gui_width - 40,
+		_label_y,
+		_hostile_name + "  " + string(_enemy.current_health) + " / " + string(_enemy.max_health)
+	);
 	draw_set_color(make_color_rgb(51, 63, 79));
-	draw_rectangle(_gui_width - 310, 53, _gui_width - 40, 69, false);
-	draw_set_color(make_color_rgb(225, 51, 89));
+	draw_rectangle(_gui_width - 310, _bar_y, _gui_width - 40, _bar_y + 16, false);
+	draw_set_color(_health_colour);
 	draw_rectangle(
 		_gui_width - 310,
-		53,
+		_bar_y,
 		_gui_width - 310 + 270 * _enemy.current_health / _enemy.max_health,
-		69,
+		_bar_y + 16,
 		false
 	);
 }

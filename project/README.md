@@ -11,5 +11,6 @@ Controls:
 - `Esc`: release or recapture the mouse
 - `R`: restart after victory or death
 
-The arena, enemy, and weapon are drawn with GameMaker-native primitives, so
-the prototype does not require imported art or audio.
+The arena, two distinct enemies, visible enemy projectiles, and weapon are
+drawn with GameMaker-native primitives, so the prototype does not require
+imported art or audio. Defeat both enemies to secure the room.

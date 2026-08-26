@@ -39,16 +39,39 @@ finish_encounter = method(id, function(_terminal_phase) {
 	}
 });
 
+/// Counts living instances across the enemy object family, including child variants.
+count_living_enemies = method(id, function() {
+	var _living_count = 0;
+	var _enemy_count = instance_number(obj_fps_enemy);
+	for (var _enemy_index = 0; _enemy_index < _enemy_count; _enemy_index += 1) {
+		var _enemy = instance_find(obj_fps_enemy, _enemy_index);
+		if (
+			instance_exists(_enemy)
+			&& variable_instance_exists(_enemy, "initialized")
+			&& _enemy.initialized
+			&& _enemy.alive
+		) {
+			_living_count += 1;
+		}
+	}
+
+	return _living_count;
+});
+
+/// Resolves death or victory from the player's health and every living enemy.
+refresh_terminal_phase = method(id, function() {
+	var _next_phase = fps_get_terminal_state(current_health, count_living_enemies());
+	if (_next_phase != FPS_STATE_PLAYING) {
+		finish_encounter(_next_phase);
+	}
+});
+
 /// Applies enemy damage only while the encounter is active.
 take_damage = method(id, function(_amount) {
 	if (phase == FPS_STATE_PLAYING) {
 		current_health = fps_apply_damage(current_health, _amount);
 		damage_flash_frames = 12;
-
-		var _next_phase = fps_get_terminal_state(current_health, FPS_ENEMY_MAX_HEALTH);
-		if (_next_phase == FPS_STATE_DEAD) {
-			finish_encounter(_next_phase);
-		}
+		refresh_terminal_phase();
 	}
 });
 
@@ -66,3 +89,6 @@ arena_buffer = fps_build_arena_buffer(
 );
 enemy_buffer = fps_build_unit_box_buffer(geometry_format, make_color_rgb(205, 42, 78));
 enemy_hit_buffer = fps_build_unit_box_buffer(geometry_format, make_color_rgb(255, 225, 235));
+ranged_enemy_buffer = fps_build_unit_box_buffer(geometry_format, make_color_rgb(122, 72, 224));
+ranged_enemy_accent_buffer = fps_build_unit_box_buffer(geometry_format, make_color_rgb(75, 221, 242));
+enemy_projectile_buffer = fps_build_unit_box_buffer(geometry_format, make_color_rgb(255, 190, 45));

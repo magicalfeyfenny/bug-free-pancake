@@ -30,6 +30,8 @@
     {"id":{"name":"fps_render_geometry","path":"scripts/fps_render_geometry/fps_render_geometry.yy",},},
     {"id":{"name":"obj_fps_controller","path":"objects/obj_fps_controller/obj_fps_controller.yy",},},
     {"id":{"name":"obj_fps_enemy","path":"objects/obj_fps_enemy/obj_fps_enemy.yy",},},
+    {"id":{"name":"obj_fps_ranged_enemy","path":"objects/obj_fps_ranged_enemy/obj_fps_ranged_enemy.yy",},},
+    {"id":{"name":"obj_fps_enemy_projectile","path":"objects/obj_fps_enemy_projectile/obj_fps_enemy_projectile.yy",},},
     {"id":{"name":"rm_fps_arena","path":"rooms/rm_fps_arena/rm_fps_arena.yy",},},
     {"id":{"name":"fnt_gmtl_demo","path":"fonts/fnt_gmtl_demo/fnt_gmtl_demo.yy",},},
     {"id":{"name":"o_gmtl_demo_async","path":"objects/o_gmtl_demo_async/o_gmtl_demo_async.yy",},},

@@ -48,66 +48,32 @@ for (var _enemy_index = 0; _enemy_index < _enemy_count; _enemy_index += 1) {
 		continue;
 	}
 
-	var _body_mesh = enemy_buffer;
-	var _accent_mesh = enemy_buffer;
+	var _enemy_mesh = enemy_buffer;
 	if (_enemy.enemy_kind == FPS_ENEMY_KIND_RANGED) {
-		_body_mesh = ranged_enemy_buffer;
-		_accent_mesh = ranged_enemy_accent_buffer;
+		_enemy_mesh = ranged_enemy_buffer;
 	}
 	if (_enemy.hit_flash_frames > 0) {
-		_body_mesh = enemy_hit_buffer;
-		_accent_mesh = enemy_hit_buffer;
+		_enemy_mesh = _enemy.enemy_kind == FPS_ENEMY_KIND_RANGED
+			? ranged_enemy_hit_buffer
+			: enemy_hit_buffer;
 	}
 
+	var _facing = point_direction(_enemy.x, _enemy.y, x, y);
 	matrix_set(
 		matrix_world,
 		matrix_build(
 			_enemy.x,
 			_enemy.y,
-			_enemy.body_z,
 			0,
 			0,
 			0,
-			_enemy.body_width,
-			_enemy.body_depth,
-			_enemy.body_height
+			_facing,
+			1,
+			1,
+			1
 		)
 	);
-	vertex_submit(_body_mesh, pr_trianglelist, -1);
-
-	if (_enemy.shoulder_width > 0) {
-		matrix_set(
-			matrix_world,
-			matrix_build(
-				_enemy.x,
-				_enemy.y,
-				_enemy.shoulder_z,
-				0,
-				0,
-				0,
-				_enemy.shoulder_width,
-				_enemy.shoulder_depth,
-				_enemy.shoulder_height
-			)
-		);
-		vertex_submit(_accent_mesh, pr_trianglelist, -1);
-	}
-
-	matrix_set(
-		matrix_world,
-		matrix_build(
-			_enemy.x,
-			_enemy.y,
-			_enemy.body_z + _enemy.body_height,
-			0,
-			0,
-			0,
-			_enemy.head_size,
-			_enemy.head_size,
-			_enemy.head_height
-		)
-	);
-	vertex_submit(_accent_mesh, pr_trianglelist, -1);
+	vertex_submit(_enemy_mesh, pr_trianglelist, -1);
 }
 
 var _projectile_count = instance_number(obj_fps_enemy_projectile);

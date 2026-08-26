@@ -18,7 +18,12 @@
     {"$GMFolder":"","%Name":"Setup","folderPath":"folders/Libraries/GMTL/Setup.yy","name":"Setup","resourceType":"GMFolder","resourceVersion":"2.0",},
   ],
   "ForcedPrefabProjectReferences":[],
-  "IncludedFiles":[],
+  "IncludedFiles":[
+    {"$GMIncludedFile":"","%Name":"enemy_chaser.vbuff","CopyToMask":-1,"filePath":"datafiles/models","name":"enemy_chaser.vbuff","resourceType":"GMIncludedFile","resourceVersion":"2.0",},
+    {"$GMIncludedFile":"","%Name":"enemy_chaser_hit.vbuff","CopyToMask":-1,"filePath":"datafiles/models","name":"enemy_chaser_hit.vbuff","resourceType":"GMIncludedFile","resourceVersion":"2.0",},
+    {"$GMIncludedFile":"","%Name":"enemy_skirmisher.vbuff","CopyToMask":-1,"filePath":"datafiles/models","name":"enemy_skirmisher.vbuff","resourceType":"GMIncludedFile","resourceVersion":"2.0",},
+    {"$GMIncludedFile":"","%Name":"enemy_skirmisher_hit.vbuff","CopyToMask":-1,"filePath":"datafiles/models","name":"enemy_skirmisher_hit.vbuff","resourceType":"GMIncludedFile","resourceVersion":"2.0",},
+  ],
   "isEcma":false,
   "LibraryEmitters":[],
   "MetaData":{

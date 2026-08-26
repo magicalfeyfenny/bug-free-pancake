@@ -47,6 +47,35 @@ function fps_create_vertex_format() {
 	return vertex_format_end();
 }
 
+/// Loads one packaged 3D model into the vertex format used by this renderer.
+function fps_load_vertex_buffer(_relative_path, _format) {
+	var _path = program_directory + _relative_path;
+	if (!file_exists(_path)) {
+		_path = program_directory + "datafiles/" + _relative_path;
+	}
+	if (!file_exists(_path)) {
+		_path = working_directory + _relative_path;
+	}
+	if (!file_exists(_path)) {
+		show_error("Missing authored 3D model: " + _relative_path, true);
+		return -1;
+	}
+
+	var _data = buffer_load(_path);
+	var _byte_count = buffer_get_size(_data);
+	// Each triangle uses three 24-byte position, colour, and texture vertices.
+	if (_byte_count <= 0 || _byte_count mod 72 != 0) {
+		buffer_delete(_data);
+		show_error("Invalid authored 3D model: " + _relative_path, true);
+		return -1;
+	}
+
+	var _vertex_buffer = vertex_create_buffer_from_buffer(_data, _format);
+	buffer_delete(_data);
+	vertex_freeze(_vertex_buffer);
+	return _vertex_buffer;
+}
+
 /// Builds the arena once so normal frames only submit frozen geometry.
 function fps_build_arena_buffer(_format, _width, _height, _wall_height, _wall_thickness) {
 	var _buffer = vertex_create_buffer();

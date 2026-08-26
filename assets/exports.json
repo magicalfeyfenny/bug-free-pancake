@@ -1,4 +1,29 @@
 {
   "version": 1,
-  "exports": []
+  "exports": [
+    {
+      "kind": "model_3d",
+      "sources": [
+        "assets/source/models/enemies/enemy_chaser.blend",
+        "assets/source/models/enemies/enemy_chaser.obj",
+        "assets/source/models/enemies/enemy_chaser.mtl"
+      ],
+      "runtime": [
+        "assets/runtime/models/enemy_chaser.vbuff",
+        "assets/runtime/models/enemy_chaser_hit.vbuff"
+      ]
+    },
+    {
+      "kind": "model_3d",
+      "sources": [
+        "assets/source/models/enemies/enemy_skirmisher.blend",
+        "assets/source/models/enemies/enemy_skirmisher.obj",
+        "assets/source/models/enemies/enemy_skirmisher.mtl"
+      ],
+      "runtime": [
+        "assets/runtime/models/enemy_skirmisher.vbuff",
+        "assets/runtime/models/enemy_skirmisher_hit.vbuff"
+      ]
+    }
+  ]
 }

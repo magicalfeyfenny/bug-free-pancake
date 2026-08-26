@@ -11,6 +11,8 @@ Controls:
 - `Esc`: release or recapture the mouse
 - `R`: restart after victory or death
 
-The arena, two distinct enemies, visible enemy projectiles, and weapon are
-drawn with GameMaker-native primitives, so the prototype does not require
-imported art or audio. Defeat both enemies to secure the room.
+The chaser and ranged skirmisher use distinct authored low-poly models. Their
+editable Blender and OBJ/MTL sources live under `assets/source/models/enemies`,
+with GameMaker-ready vertex buffers under `assets/runtime/models`. The arena,
+visible enemy projectiles, and weapon remain GameMaker-native primitives.
+Defeat both enemies to secure the room.

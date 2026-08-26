@@ -1,0 +1,31 @@
+# Authored materials for enemy_skirmisher
+
+newmtl MAT_Skirmisher_CyanEnergy
+Kd 0.050000 0.820000 0.960000
+d 1.000000
+Ns 160.000000
+illum 2
+
+newmtl MAT_Skirmisher_DarkMechanisms
+Kd 0.025000 0.035000 0.090000
+d 1.000000
+Ns 160.000000
+illum 2
+
+newmtl MAT_Skirmisher_DeepViolet
+Kd 0.075000 0.025000 0.200000
+d 1.000000
+Ns 160.000000
+illum 2
+
+newmtl MAT_Skirmisher_LavenderPanels
+Kd 0.560000 0.320000 0.950000
+d 1.000000
+Ns 160.000000
+illum 2
+
+newmtl MAT_Skirmisher_VioletArmor
+Kd 0.340000 0.085000 0.780000
+d 1.000000
+Ns 160.000000
+illum 2

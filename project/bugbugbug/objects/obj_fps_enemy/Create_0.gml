@@ -11,16 +11,6 @@ attack_damage = 15;
 attack_delay = 45;
 attack_cooldown = attack_delay;
 
-body_width = 46;
-body_depth = 38;
-body_height = 70;
-head_size = 38;
-head_height = head_size;
-body_z = 0;
-shoulder_width = 0;
-shoulder_depth = 0;
-shoulder_height = 0;
-shoulder_z = 0;
 hit_sphere_height = 58;
 hit_sphere_radius = 44;
 hit_flash_frames = 0;

@@ -87,8 +87,8 @@ arena_buffer = fps_build_arena_buffer(
 	wall_height,
 	wall_thickness
 );
-enemy_buffer = fps_build_unit_box_buffer(geometry_format, make_color_rgb(205, 42, 78));
-enemy_hit_buffer = fps_build_unit_box_buffer(geometry_format, make_color_rgb(255, 225, 235));
-ranged_enemy_buffer = fps_build_unit_box_buffer(geometry_format, make_color_rgb(122, 72, 224));
-ranged_enemy_accent_buffer = fps_build_unit_box_buffer(geometry_format, make_color_rgb(75, 221, 242));
+enemy_buffer = fps_load_vertex_buffer("models/enemy_chaser.vbuff", geometry_format);
+enemy_hit_buffer = fps_load_vertex_buffer("models/enemy_chaser_hit.vbuff", geometry_format);
+ranged_enemy_buffer = fps_load_vertex_buffer("models/enemy_skirmisher.vbuff", geometry_format);
+ranged_enemy_hit_buffer = fps_load_vertex_buffer("models/enemy_skirmisher_hit.vbuff", geometry_format);
 enemy_projectile_buffer = fps_build_unit_box_buffer(geometry_format, make_color_rgb(255, 190, 45));

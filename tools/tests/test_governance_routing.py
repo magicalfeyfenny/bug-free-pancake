@@ -119,7 +119,6 @@ class GovernanceRoutingTests(unittest.TestCase):
                 "compatibility-obligations",
                 "source-structure",
                 "gamemaker-structured-data",
-                "manual-and-live-validation-availability",
             },
         )
         self.assertEqual(
@@ -140,7 +139,7 @@ class GovernanceRoutingTests(unittest.TestCase):
                 "compatibility-obligations",
                 "scheduled-continuation",
                 "validation-coverage-allocation",
-                "manual-and-live-validation-availability",
+                "interactive-runtime-validation",
                 "validation-evidence",
                 "milestone-commits-and-draft-publication",
                 "human-created-changes",
@@ -225,7 +224,8 @@ class GovernanceRoutingTests(unittest.TestCase):
             {
                 "scheduled-claim-eligibility",
                 "scheduled-continuation",
-                "manual-and-live-validation-availability",
+                "validation-coverage-allocation",
+                "interactive-runtime-validation",
             }.issubset(governed)
         )
         self.assertNotIn("scheduled-claim-eligibility", steward)

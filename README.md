@@ -1,8 +1,16 @@
-# GameMaker AI Workflow Template
+# Containment Protocol
 
-This repository is a reusable governance scaffold for GameMaker projects, not a
-game. It lets agents work in coherent, auditable units while humans retain
-authority over high-risk and release decisions.
+Containment Protocol is a playable first-person combat prototype for GameMaker
+LTS 2026. The current encounter supports WASD movement, mouse-look aiming, a
+hitscan weapon, a pursuing Chaser, an evasive Skirmisher with visible
+projectiles, health and damage, victory and death, and an in-game restart.
+
+Open [project/bugbugbug/bugbugbug.yyp](project/bugbugbug/bugbugbug.yyp) in
+GameMaker to play. See [project/README.md](project/README.md) for controls and
+the current gameplay and asset overview.
+
+The repository also provides a governed workflow for auditable agent changes
+while humans retain authority over high-risk and release decisions.
 
 ## Governance overview (non-normative)
 
@@ -38,6 +46,7 @@ Human-created work uses a separate protected lane that agents do not modify.
 
 ## Start here
 
-Follow [docs/SETUP.md](docs/SETUP.md) when creating a repository from this
-template. For day-to-day work, [AGENTS.md](AGENTS.md#authority-and-task-routing)
-routes each task to only the governance sections and local skill it needs.
+Use [project/README.md](project/README.md) to run the game. Follow
+[docs/SETUP.md](docs/SETUP.md) for repository setup and maintenance. For
+day-to-day work, [AGENTS.md](AGENTS.md#authority-and-task-routing) routes each
+task to only the governance sections and local skill it needs.

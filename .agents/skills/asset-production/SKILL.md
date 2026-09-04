@@ -11,6 +11,27 @@ authored assets.
 Follow [Derived assets](../../../GOVERNANCE.md#derived-assets) and the affected
 `[assets]` and `[assets.pipelines.*]` tables in
 [PROJECT_POLICY.toml](../../../PROJECT_POLICY.toml).
+Before creating, changing, or replacing an authored asset, follow
+[Asset completion and authority](../../../GOVERNANCE.md#asset-completion-and-authority).
+For placeholders supporting a mixed implementation issue, also follow
+[Placeholder-backed mixed work](../../../GOVERNANCE.md#placeholder-backed-mixed-work).
+
+Keep a deterministic placeholder visibly non-production, preserve its intended
+replacement and runtime integration point, and return those exact details to
+Governed Change for the required pull-request handoff. Return a canonical
+asset-issue link only when Governance identifies concrete remaining
+asset-production work.
+
+Treat `authored-placeholder` as an authored asset in an undecided completion
+state, not as unfinished production. Promotion to `final` is a human-authority
+transition, and human authority may accept the asset unchanged. Do not create
+or request production work or tracking solely because an existing authored
+asset still needs human review, acceptance, or promotion.
+
+When authorized agent production creates and integrates an asset at
+`authored-placeholder`, record that state without soliciting an immediate
+`final` decision. Do not make otherwise-complete work wait for a decision that
+the current contract does not require.
 
 ## Production defaults
 

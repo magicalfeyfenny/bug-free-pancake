@@ -3,6 +3,7 @@
   "exports": [
     {
       "kind": "model_3d",
+      "completion": "authored-placeholder",
       "sources": [
         "assets/source/models/enemies/enemy_chaser.blend",
         "assets/source/models/enemies/enemy_chaser.obj",
@@ -15,6 +16,7 @@
     },
     {
       "kind": "model_3d",
+      "completion": "authored-placeholder",
       "sources": [
         "assets/source/models/enemies/enemy_skirmisher.blend",
         "assets/source/models/enemies/enemy_skirmisher.obj",

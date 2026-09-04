@@ -22,6 +22,48 @@ reminder, not a second source of authority.
 
 Every issue created by an agent contains a summary, acceptance criteria,
 bounded scope, and expected risk, and is assigned to the current user.
+Feature-specific engineering constraints and validation may be included when
+they materially clarify the completion contract.
+
+Acceptance criteria describe the minimum product-visible or
+integration-visible outcomes required to consider the issue complete. They
+state what must be true of the completed outcome, not every property that may
+be useful to implement or test.
+
+Classify issue requirements as follows:
+
+- Acceptance criteria describe required observable behavior, capability,
+  integration results, or failure behavior. A criterion should normally remain
+  valid if the implementation is replaced with a different implementation
+  that provides the same outcome.
+- Engineering constraints describe implementation properties that must be
+  preserved, such as stable identities, determinism, ownership boundaries,
+  lifecycle invariants, coordinate systems, compatibility requirements, or
+  asset-authority rules.
+- Validation describes evidence used to establish that the outcome and its
+  constraints hold, such as automated tests and fixtures, representative
+  manual or live playtests and captures, or other checks.
+- Repository-wide policy requirements are not repeated as issue acceptance
+  criteria merely because they apply to the work. The governed validation
+  lifecycle and other applicable repository policy remain required without
+  being copied into each issue.
+
+An issue may include Engineering constraints and Validation sections when they
+clarify feature-specific requirements. Omit those sections when the shared
+repository rules and ordinary proportional validation are sufficient.
+
+Do not make a statement an acceptance criterion merely because it is testable.
+Prefer outcome requirements over implementation mechanisms. Promote a detail
+to explicit acceptance criteria when it defines the requested outcome,
+distinguishes a plausible but incorrect implementation, records a known
+regression or important failure case, or expresses a requirement that cannot
+safely be inferred.
+
+Prefer concise outcome criteria over exhaustive permutations. Merge
+equivalent lifecycle states and edge cases unless their differences create
+distinct behavior or a known feature-specific risk. Keep validation plans out
+of acceptance criteria and allocate their evidence under
+[Validation coverage allocation](#validation-coverage-allocation).
 
 An implementation issue defines one coherent, independently meaningful outcome
 with one acceptance contract. Atomicity is measured by the product or
@@ -55,6 +97,251 @@ Project Steward owns evidence-backed issue creation for stewardship audits,
 including scheduled audits. Its skill owns the audit-specific evidence and
 per-run constraints. In scheduled operation, Project Steward owns issue
 creation and does not implement issues.
+
+### Compatibility obligations
+
+Compatibility is required only when an independently established contract or
+consumer must continue to accept an older representation.
+
+A compatibility obligation must be supported by evidence that is independent
+of the implementation proposed to satisfy it. Valid evidence must either
+predate the current governed change or come from explicit current human
+direction. Examples include:
+
+- released or published interfaces;
+- persisted user data, saves, configuration, or other durable data that must
+  continue to load;
+- independently maintained consumers that cannot be updated atomically with
+  the current change;
+- imported or external contracts that the repository does not control; or
+- explicit human direction requiring old and new representations to coexist.
+
+Repository history establishes that an older representation existed; it does
+not by itself establish that the representation must remain compatible.
+Repository-owned code, tests, fixtures, content, and documentation that can be
+updated atomically with the current change are ordinary consumers of the
+current representation, not independent compatibility consumers.
+
+Evidence created by the current governed change cannot establish the
+compatibility obligation that would justify preserving it. Code, tests,
+fixtures, documentation, aliases, migration paths, normalization layers,
+deprecated representations, or other consumers introduced or modified on the
+current issue branch, pull request, or earlier implementation attempt do not
+become compatibility evidence merely because later work depends on them.
+
+The same applies to agent-authored intermediate states. When human direction
+changes an unreleased internal name or representation during governed work,
+implement the newly intended state directly and remove superseded intermediate
+machinery unless independent evidence establishes a real compatibility
+obligation.
+
+Do not infer a compatibility obligation merely because an identifier is named
+stable, canonical, versioned, legacy, public, or otherwise appears
+contract-like. Establish the actual consumer or durable boundary.
+
+When no independent compatibility obligation exists, prefer direct
+replacement. Update the canonical representation and all repository-owned
+consumers together, update tests to the intended current contract, and remove
+the superseded representation instead of adding aliases, migration layers,
+normalization paths, wrappers, or deprecated forms.
+
+Agent-authored issues must not speculate about compatibility. An Engineering
+constraint or Validation requirement for backward compatibility, aliases,
+migration, normalization, or legacy support must identify the concrete
+independent consumer or durable contract that requires it and cite the
+available source evidence. Do not add conditional requirements such as
+"preserve a compatibility alias if needed" without that evidence.
+
+### Scheduled claim eligibility
+
+The scheduled Governed Change automation owns selection and claim decisions
+for existing implementation issues. Project Steward continues to own audit,
+tracking, and evidence-backed issue creation; it does not claim or execute
+issues. Skills route scheduled work to the Governed Change automation template
+instead of defining separate claim policies.
+
+Before claiming an issue, compare its primary non-degradable deliverable with
+the capabilities available in the current execution environment. The primary
+non-degradable deliverable is the outcome that makes the issue independently
+meaningful and cannot be deferred, substituted, or reduced without violating
+its acceptance contract. The issue is eligible only when the environment has
+the capabilities required to complete that deliverable. If capability is
+unknown, fail closed and leave the issue available for a later capable run.
+
+The ability to create, encode, convert, or procedurally construct a file in the
+required runtime or source format does not by itself establish the capability
+to author the requested asset. Eligibility depends on the environment being
+capable of producing the asset form and quality required by the issue’s
+acceptance contract.
+
+When final authored assets are that deliverable, the issue is
+ineligible if the environment lacks the required asset-authoring capability.
+Eligibility is based on capability, not on a named runner, provider, model, or
+generation mechanism.
+
+Broader implementation work remains eligible when authored assets are
+incidental and deterministic placeholders preserve meaningful implementation
+progress without weakening the issue's acceptance contract. A deterministic
+placeholder is scaffolding, not evidence for an acceptance criterion that
+explicitly requires final production or authored assets.
+
+This capability check composes with every other scheduled eligibility
+condition, including issue atomicity, risk handling, dependency order, and the
+fail-closed recheck immediately before repository mutation. It does not replace
+or relax any of them.
+
+### Placeholder-backed mixed work
+
+A mixed implementation issue may use deterministic placeholders when final
+authored assets are secondary and the current execution environment
+lacks the capability to produce them. This is allowed only when the
+deterministic placeholder preserves an independently meaningful primary
+outcome and the issue's existing acceptance contract permits the final asset
+to be deferred. It does not make an asset-primary issue eligible.
+
+Keep every deterministic placeholder explicitly identified as non-production
+scaffolding in the implementation and pull-request handoff. Preserve the
+intended gameplay, UI, or runtime integration point so the final authored asset
+can replace the deterministic placeholder without recreating completed
+implementation work.
+
+A deterministic placeholder never satisfies an acceptance criterion that
+requires a final authored or production asset. If the current issue still
+contains such a criterion, the issue remains incomplete; linking a follow-up
+does not make that criterion complete.
+
+Follow-up tracking is required only for concrete remaining asset-production
+work. Such work must be explicitly requested by human direction or
+independently required by a current product or acceptance contract. An
+agent-authored tracking item does not establish that requirement merely by
+restating a possible future revision as issue scope.
+
+When the implementation issue can complete independently and concrete,
+separable asset-production work remains, resolve its tracking before the
+implementation issue completes:
+
+1. Search live tracking for an appropriate canonical asset issue. Link the
+   original issue and pull request to that issue, updating it only as needed to
+   identify the concrete remaining production work and replacement point.
+2. If no appropriate issue exists, create exactly one narrow follow-up assigned
+   to the current user. Reference the original issue and pull request, own only
+   the concrete unresolved asset production and its asset-specific validation,
+   and exclude implementation scope already completed with the placeholder.
+3. Record the canonical follow-up link and the exact deterministic-placeholder
+   scope and replacement point in the original pull-request handoff.
+
+When concrete remaining production meets this rule, its required follow-up is
+part of completing the selected mixed issue, not permission to generate a
+general backlog. A scheduled execution may create it only after claiming that
+issue and only under the rules above. The follow-up uses the normal
+issue-authority, dependency, and risk rules for its own scope.
+
+### Scheduled continuation
+
+Before selecting a new issue, a scheduled Governed Change run checks for an
+existing incomplete governed change owned by the current automation user. A
+valid continuation has an open issue assigned to that user, its matching
+issue-numbered `work/<issue>-<slug>` branch, and its draft pull request. The
+issue and pull request must still pass the normal ownership, dependency,
+blocker, and human-authority checks. The capability check still applies to any
+remaining primary non-degradable deliverable; an unavailable environment
+needed only for required manual or live evidence is handled by the validation
+availability rule and does not invalidate the continuation. A human-created
+branch or pull request and a `work:blocked` change are never continuations.
+The draft pull request must not already have a completion line or completion
+label; a `work:complete` or `work:review-ready` pull request follows its normal
+completion path instead of being resumed as incomplete work.
+
+When a valid continuation exists, resume its next incomplete implementation or
+validation milestone on that branch and draft pull request before selecting
+new work only when the current environment can make meaningful progress on at
+least one remaining implementation or validation milestone. A continuation
+that can only wait for unavailable manual or live evidence, an unavailable
+interactive desktop, or required human action is pending rather than
+actionable; leave it pending and allow the run to select at most one new
+eligible issue. Do not repeatedly retry an unavailable GUI or alter the
+pending continuation just to make progress appear possible.
+
+A continuation does not make an asset-primary issue eligible when its remaining
+primary deliverable still needs an unavailable capability. When the required
+environment becomes available, or the required human action is resolved, the
+continuation becomes actionable and takes priority again. Resume the missing
+manual or live observation and then follow the ordinary completion transition.
+
+Do not create a replacement issue for a pending continuation. If no actionable
+continuation exists, the run may select at most one new eligible issue under
+the ordinary scheduled claim rules.
+
+## Asset completion and authority
+
+These rules apply to repository-owned authored assets across visual, audio, 3D,
+and animation work, including assets kept in source files, runtime outputs, or
+engine-native resources.
+
+### Completion levels
+
+Asset completion levels are ordered by completion commitment:
+
+1. `deterministic-placeholder` is reproducible scaffolding that is explicitly
+   non-production.
+2. `authored-placeholder` is a legitimately authored asset with authorial or
+   source commitment that has not yet been explicitly accepted as the final
+   production asset. It does not mean the asset is known to require revision,
+   replacement, refinement, redraw, regeneration, or later completion work.
+3. `final` is an asset explicitly accepted as final by human authorial
+   authority.
+
+Authorship, source authority, provenance, and completion level are independent.
+An editable source, a named author, or a human-authored asset does not by
+itself make an asset final, and a generated file does not become a permitted
+deterministic placeholder merely because it is simple or easy to reproduce.
+The level records completion and replacement authority; it is not a judgment
+based on asset quality alone.
+
+When this policy is adopted, repository-owned sprites and other authored
+visual, audio, 3D, and animation assets already present are
+`authored-placeholder` by default unless human authority explicitly marks them
+as another level. Agents must not infer `deterministic-placeholder` from age,
+simplicity, low detail, temporary appearance, or missing provenance.
+
+Asset completion status is state. Only concrete requested work belongs in the
+backlog. The absence of `final` status alone does not establish deferred work,
+and possible future revision is not deferred work. An `authored-placeholder`
+may remain at that level indefinitely. Human authority may later accept it
+unchanged, request changes, replace it, or continue leaving it undecided.
+Authorized agent work may create and integrate an asset as
+`authored-placeholder` without seeking an immediate human decision about
+`final` status; that undecided status does not make otherwise-complete asset
+production unfinished.
+
+### Replacement and promotion
+
+When the current issue authorizes work on an asset, normal agent work may
+replace a non-final asset only with an asset at the same or a higher completion
+level. An agent must not replace an asset with a lower level; in particular,
+`deterministic-placeholder` must not replace `authored-placeholder`.
+
+Agents must not replace, overwrite, restyle, or regenerate a `final` asset
+without explicit human authorization, even when the proposed result appears
+more polished or technically superior. Promotion to `final` is human-authority
+only. Asset quality alone does not promote an asset, and an
+`authored-placeholder` remains a placeholder until human authority explicitly
+accepts it as final.
+
+Promoting an `authored-placeholder` to `final` through human acceptance is an
+authority transition, not an implementation or asset-production deliverable.
+Human authorial authority may promote the existing asset unchanged, without
+modifying or replacing it and without creating an implementation issue.
+
+Agents must not create or retain an issue, dependency, blocker, sprint
+obligation, or asset-production task merely because an `authored-placeholder`
+might be changed later or has not been promoted to `final`. They must not claim
+or continue such tracking. In particular, agents must not create or retain an
+issue when its only unresolved outcome is human review, approval, acceptance,
+or promotion of an existing authored asset. Create or retain asset-production
+tracking only when concrete further asset work is explicitly requested by
+human direction or independently required by a current product or acceptance
+contract.
 
 ## Branches
 
@@ -103,6 +390,81 @@ combine their scopes.
 
 Keep the change bounded to that issue and do not absorb unrelated cleanup.
 Preserve useful behavior, not obsolete architecture merely because it exists.
+
+### Contract-oriented validation
+
+Tests and automated policy checks should validate required behavior, structure,
+and repository contracts rather than incidental wording or representation.
+
+Prefer assertions about semantic requirements over exact prose, formatting,
+field order, counts, serialized text, or other incidental representation.
+
+Exact-representation assertions are appropriate only when that exact
+representation is explicitly part of the contract, such as a documented
+compatibility interface, protocol grammar, required identifier, checksum, or
+other externally fixed value. Do not infer that representation is contractual
+merely because code, tests, tools, or automation consume it.
+
+When a semantic assertion can establish the governed requirement, use the
+semantic assertion.
+
+A wording, formatting, ordering, or representation change that preserves the
+intended contract should not require unrelated test changes merely to satisfy
+stale textual expectations.
+
+### Validation coverage allocation
+
+Allocate validation coverage according to risk, contract relevance, and what
+each form of evidence can establish. Automated and manual or live validation
+have complementary responsibilities; neither is a blanket substitute for the
+other.
+
+When numeric, combinatorial, deterministic, or state-transition behavior is
+contract-relevant and practical to assert mechanically, prefer automated
+validation for the exhaustive relevant state space. Automated invariant
+coverage should replace manual repetition of every ship, difficulty, rank,
+state, or similar machine-testable combination. Do not require exhaustive
+automated matrices when the combinations are meaningless, intractable,
+redundant, or outside the contract.
+
+Use manual or live validation to sample a small, risk-appropriate set of cases
+for qualities that automated assertions cannot adequately establish. Check
+representative player-visible behavior and integration, visual readability and
+accessibility, timing and feel, interaction, and tool or engine behavior. As
+applicable, sample baseline, typical or midpoint, edge, and highest-pressure
+cases. These are selection dimensions, not a universal checklist or fixed
+sample count. Preserve additional manual coverage for known cross-state risks
+or any genuinely visual, interactive, timing-sensitive, accessibility,
+readability, integration, or tool and engine outcome that remains unproven
+mechanically.
+
+Issue acceptance criteria state required outcomes. Feature-specific validation
+plans choose this allocation and record the evidence needed without expanding
+the criteria into a large coverage matrix. Manual or live samples may traverse
+states already covered by automation to judge different qualities, but they do
+not need to repeat the complete machine-tested state space.
+
+This allocation operates inside the existing validation stages. It does not
+remove required Stage 1 checks or the full Stage 2 suite, weaken Stage 3 hosted
+evidence, change risk classification, or replace required human review.
+
+### Manual and live validation availability
+
+Automated evidence and manual or live evidence establish different facts. Do
+not use automated tests, headless checks, or source inspection as a substitute
+for required manual or live observation.
+
+For GUI or GameMaker validation, preflight interactive desktop availability
+where practical. If the desktop or required interactive tool is unavailable,
+record that environment blocker and avoid repeated GUI launch attempts.
+
+When required manual or live evidence is unavailable after practical preflight,
+the agent may continue coherent implementation work and collect the automated
+evidence that is available. It may commit, push, and update the draft pull
+request, but it must stop before adding completion metadata or claiming the
+issue complete. The handoff must identify the exact missing observation and
+the environment condition that prevented it. The missing evidence remains
+required and must be obtained before the ordinary completion transition.
 
 ## Validation evidence
 
@@ -353,6 +715,12 @@ Unnecessary linguistic complexity is obfuscation, just as unnecessary
 implementation complexity is, and must be avoided unless it is necessary and
 justified by the outcome it serves.
 
+For renames, representation changes, and replacement of internal paths, follow
+[Compatibility obligations](#compatibility-obligations). Do not preserve a
+superseded internal representation merely because repository-owned consumers
+or tests currently reference it when they can be updated atomically with the
+change.
+
 ## Source structure
 
 A repository-owned source file has one primary responsibility.
@@ -395,7 +763,16 @@ human instruction.
 
 Game-specific test suites are added to `Tests` as they become available.
 
-CI may enforce exact structured rules.
+Tests should protect contracts, not incidental representations. Do not use
+exact-text, exact-order, or exact-count assertions when a semantic assertion
+can establish the same requirement, unless the exact representation is itself
+part of the contract.
+
+CI may enforce exact structured rules when that exact structure is itself part
+of the contract. Do not infer that a representation is contractual merely
+because a test, tool, or automation consumes it.
+
+CI must not interpret arbitrary natural-language prose.
 
 CI must not interpret arbitrary natural-language prose.
 

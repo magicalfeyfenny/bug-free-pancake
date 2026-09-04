@@ -54,9 +54,11 @@ class GovernanceRoutingTests(unittest.TestCase):
             ROOT / "GOVERNANCE.md",
             ROOT / "README.md",
             ROOT / "docs/SETUP.md",
+            ROOT / ".agents/skills/asset-production/SKILL.md",
             ROOT / ".agents/skills/gamemaker-production/SKILL.md",
             ROOT / ".agents/skills/governed-change/SKILL.md",
             ROOT / ".agents/skills/project-steward/SKILL.md",
+            ROOT / "templates/codex/governed-change.txt",
         )
 
         for source in entrypoints:
@@ -69,6 +71,9 @@ class GovernanceRoutingTests(unittest.TestCase):
     def test_task_entrypoints_route_to_their_scoped_governance_sections(self):
         """Keep normal work on its relevant Governance sections."""
         agents = governance_fragments(ROOT / "AGENTS.md")
+        assets = governance_fragments(
+            ROOT / ".agents/skills/asset-production/SKILL.md"
+        )
         production = governance_fragments(
             ROOT / ".agents/skills/gamemaker-production/SKILL.md"
         )
@@ -111,9 +116,18 @@ class GovernanceRoutingTests(unittest.TestCase):
             production,
             {
                 "production-code",
+                "compatibility-obligations",
                 "source-structure",
-                "derived-assets",
                 "gamemaker-structured-data",
+                "manual-and-live-validation-availability",
+            },
+        )
+        self.assertEqual(
+            assets,
+            {
+                "asset-completion-and-authority",
+                "derived-assets",
+                "placeholder-backed-mixed-work",
             },
         )
         self.assertTrue(
@@ -121,6 +135,12 @@ class GovernanceRoutingTests(unittest.TestCase):
                 "issue-authority",
                 "branches",
                 "unit-of-work",
+                "asset-completion-and-authority",
+                "placeholder-backed-mixed-work",
+                "compatibility-obligations",
+                "scheduled-continuation",
+                "validation-coverage-allocation",
+                "manual-and-live-validation-availability",
                 "validation-evidence",
                 "milestone-commits-and-draft-publication",
                 "human-created-changes",
@@ -140,11 +160,19 @@ class GovernanceRoutingTests(unittest.TestCase):
         )
         self.assertEqual(
             steward,
-            {"issue-authority", "human-created-changes"},
+            {
+                "issue-authority",
+                "asset-completion-and-authority",
+                "placeholder-backed-mixed-work",
+                "compatibility-obligations",
+                "validation-coverage-allocation",
+                "human-created-changes",
+            },
         )
 
         policy = (ROOT / "PROJECT_POLICY.toml").resolve()
         for entrypoint in (
+            ROOT / ".agents/skills/asset-production/SKILL.md",
             ROOT / ".agents/skills/gamemaker-production/SKILL.md",
             ROOT / ".agents/skills/governed-change/SKILL.md",
         ):
@@ -184,18 +212,23 @@ class GovernanceRoutingTests(unittest.TestCase):
 
         self.assertTrue(expected.issubset(setup_targets))
 
-        for template, skill_name in (
-            ("governed-change.txt", "governed-change"),
-            ("project-steward.txt", "project-steward"),
-        ):
-            text = (ROOT / "templates/codex" / template).read_text(
-                encoding="utf-8"
-            )
-            first_line = next(line for line in text.splitlines() if line.strip())
-            self.assertEqual(
-                first_line,
-                f"Use the {skill_name} skill for this repository.",
-            )
+    def test_scheduled_claim_policy_has_one_implementation_owner(self):
+        """Route scheduled claims through Governed Change, not stewardship."""
+        governed = governance_fragments(
+            ROOT / "templates/codex/governed-change.txt"
+        )
+        steward = governance_fragments(
+            ROOT / "templates/codex/project-steward.txt"
+        )
+
+        self.assertTrue(
+            {
+                "scheduled-claim-eligibility",
+                "scheduled-continuation",
+                "manual-and-live-validation-availability",
+            }.issubset(governed)
+        )
+        self.assertNotIn("scheduled-claim-eligibility", steward)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,13 @@
+{
+  "$GMScript":"v1",
+  "%Name":"fps_sector_contract",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"fps_sector_contract",
+  "parent":{
+    "name":"Gameplay",
+    "path":"folders/Gameplay.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}

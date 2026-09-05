@@ -36,13 +36,13 @@ if (mode == FPS_RANGED_MODE_EVADE) {
 		strafe_direction,
 		move_speed
 	);
-	var _position = fps_clamp_position(
-		x + _movement[0],
-		y + _movement[1],
-		collision_radius,
-		room_width,
-		room_height,
-		_player.wall_thickness
+	var _position = fps_sector_move_position(
+		_player.sector,
+		x,
+		y,
+		_movement[0],
+		_movement[1],
+		collision_radius
 	);
 	if (_position[0] != x + _movement[0] || _position[1] != y + _movement[1]) {
 		strafe_direction *= -1;
@@ -54,7 +54,11 @@ if (mode == FPS_RANGED_MODE_EVADE) {
 
 attack_cooldown = max(0, attack_cooldown - 1);
 var _distance = point_distance(x, y, _player.x, _player.y);
-if (attack_cooldown <= 0 && _distance > 0) {
+if (
+	attack_cooldown <= 0
+	&& _distance > 0
+	&& !fps_sector_line_blocked(_player.sector, x, y, _player.x, _player.y)
+) {
 	var _projectile = instance_create_layer(x, y, "Gameplay", obj_fps_enemy_projectile);
 	_projectile.direction_x = (_player.x - x) / _distance;
 	_projectile.direction_y = (_player.y - y) / _distance;

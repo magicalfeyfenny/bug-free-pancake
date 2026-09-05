@@ -15,6 +15,25 @@ mouse_captured = true;
 wall_height = 200;
 wall_thickness = 24;
 
+if (!variable_global_exists("fps_next_sector_seed")) {
+	global.fps_next_sector_seed = FPS_SECTOR_DEFAULT_SEED;
+}
+sector_seed = global.fps_next_sector_seed;
+sector = fps_sector_generate(
+	sector_seed,
+	room_width,
+	room_height,
+	wall_thickness,
+	wall_height
+);
+global.fps_sector = sector;
+x = sector.start_socket.x;
+y = sector.start_socket.y;
+lore_entries = fps_create_lore_entries();
+lore_read = array_create(FPS_SECTOR_TILE_COUNT, false);
+lore_open = false;
+lore_index = -1;
+
 weapon_damage = 34;
 weapon_range = 1600;
 weapon_delay = 10;
@@ -80,13 +99,7 @@ window_set_caption("Containment Protocol");
 set_mouse_capture(true);
 
 geometry_format = fps_create_vertex_format();
-arena_buffer = fps_build_arena_buffer(
-	geometry_format,
-	room_width,
-	room_height,
-	wall_height,
-	wall_thickness
-);
+arena_buffer = fps_build_sector_buffer(geometry_format, sector);
 enemy_buffer = fps_load_vertex_buffer("models/enemy_chaser.vbuff", geometry_format);
 enemy_hit_buffer = fps_load_vertex_buffer("models/enemy_chaser_hit.vbuff", geometry_format);
 ranged_enemy_buffer = fps_load_vertex_buffer("models/enemy_skirmisher.vbuff", geometry_format);

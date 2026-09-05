@@ -8,6 +8,40 @@ if (phase != FPS_STATE_PLAYING) {
 	if (keyboard_check_pressed(ord("R"))) {
 		room_restart();
 	}
+	if (keyboard_check_pressed(ord("N"))) {
+		global.fps_next_sector_seed = fps_sector_next_seed(sector_seed);
+		room_restart();
+	}
+	exit;
+}
+
+if (lore_open) {
+	if (keyboard_check_pressed(ord("E"))) {
+		lore_open = false;
+		lore_index = -1;
+		set_mouse_capture(true);
+	} else if (keyboard_check_pressed(vk_escape)) {
+		lore_open = false;
+		lore_index = -1;
+		set_mouse_capture(false);
+	}
+	exit;
+}
+
+if (keyboard_check_pressed(ord("E"))) {
+	var _near_lore = fps_sector_near_lore(sector, x, y, 72);
+	if (_near_lore >= 0) {
+		lore_index = _near_lore;
+		lore_read[lore_index] = true;
+		lore_open = true;
+		set_mouse_capture(false);
+		exit;
+	}
+}
+
+if (keyboard_check_pressed(ord("N"))) {
+	global.fps_next_sector_seed = fps_sector_next_seed(sector_seed);
+	room_restart();
 	exit;
 }
 
@@ -39,13 +73,13 @@ pitch = clamp(pitch - _mouse_delta_y * mouse_sensitivity, -72, 72);
 var _forward_input = keyboard_check(ord("W")) - keyboard_check(ord("S"));
 var _strafe_input = keyboard_check(ord("D")) - keyboard_check(ord("A"));
 var _movement = fps_movement_vector(yaw, _forward_input, _strafe_input, move_speed);
-var _position = fps_clamp_position(
-	x + _movement[0],
-	y + _movement[1],
-	collision_radius,
-	room_width,
-	room_height,
-	wall_thickness
+var _position = fps_sector_move_position(
+	sector,
+	x,
+	y,
+	_movement[0],
+	_movement[1],
+	collision_radius
 );
 x = _position[0];
 y = _position[1];
@@ -70,6 +104,9 @@ if (mouse_check_button_pressed(mb_left) && weapon_cooldown <= 0) {
 			|| !_enemy.initialized
 			|| !_enemy.alive
 		) {
+			continue;
+		}
+		if (fps_sector_line_blocked(sector, x, y, _enemy.x, _enemy.y)) {
 			continue;
 		}
 

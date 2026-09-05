@@ -88,6 +88,16 @@ function fps_sector_floor_colour(_tile) {
 		case FPS_SECTOR_ROLE_FINALE: _base_colour = make_color_rgb(64, 39, 80); break;
 	}
 
+	// The seed also changes a subtle palette band, so a new layout is visible
+	// even when two seeds happen to choose the same role and variant sequence.
+	var _style_colour = make_color_rgb(122, 164, 190);
+	switch (_tile.style_seed mod 4) {
+		case 1: _style_colour = make_color_rgb(170, 135, 84); break;
+		case 2: _style_colour = make_color_rgb(105, 137, 187); break;
+		case 3: _style_colour = make_color_rgb(161, 101, 164); break;
+	}
+	_base_colour = merge_color(_base_colour, _style_colour, 0.08);
+
 	if (_tile.variant == 1) {
 		return merge_color(_base_colour, c_white, 0.12);
 	}

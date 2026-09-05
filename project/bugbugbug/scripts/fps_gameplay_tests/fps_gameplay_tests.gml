@@ -160,7 +160,56 @@ suite(function() {
 			for (var _entry_index = 0; _entry_index < array_length(_entries); _entry_index += 1) {
 				expect(string_length(_entries[_entry_index].id) > 0).toBeTruthy();
 				expect(string_length(_entries[_entry_index].title) > 0).toBeTruthy();
-				expect(string_length(_entries[_entry_index].text) > 0).toBeTruthy();
+					expect(string_length(_entries[_entry_index].text) > 0).toBeTruthy();
+			}
+		});
+
+		it("keeps a representative seed sample valid and visually varied", function() {
+			var _role_variant_seen = [];
+			for (var _role_index = 0; _role_index < FPS_SECTOR_TILE_COUNT; _role_index += 1) {
+				array_push(_role_variant_seen, array_create(FPS_SECTOR_TILE_VARIANT_COUNT, false));
+			}
+
+			var _seed = 7001;
+			var _previous_signature = "";
+			var _changed_signatures = 0;
+			for (var _sample_index = 0; _sample_index < 24; _sample_index += 1) {
+				var _sector = fps_sector_generate(_seed, 1366, 768, 24, 200);
+				var _repeat = fps_sector_generate(_seed, 1366, 768, 24, 200);
+				expect(_repeat.layout_signature).toBe(_sector.layout_signature);
+				expect(fps_sector_center_path_is_clear(_sector, 22)).toBeTruthy();
+
+				var _tile_count = array_length(_sector.tiles);
+				for (var _tile_index = 0; _tile_index < _tile_count; _tile_index += 1) {
+					var _tile = _sector.tiles[_tile_index];
+					_role_variant_seen[_tile.role][_tile.variant] = true;
+				}
+
+				var _solid_count = array_length(_sector.solids);
+				for (var _first_index = 0; _first_index < _solid_count; _first_index += 1) {
+					for (var _second_index = _first_index + 1; _second_index < _solid_count; _second_index += 1) {
+						expect(fps_sector_rects_overlap(_sector.solids[_first_index], _sector.solids[_second_index])).toBeFalsy();
+					}
+				}
+
+				var _socket_count = array_length(_sector.sockets);
+				for (var _socket_index = 0; _socket_index < _socket_count; _socket_index += 1) {
+					var _socket = _sector.sockets[_socket_index];
+					expect(fps_sector_position_is_clear(_sector, _socket.x, _socket.y, _socket.radius)).toBeTruthy();
+				}
+
+				if (_sample_index > 0 && _sector.layout_signature != _previous_signature) {
+					_changed_signatures += 1;
+				}
+				_previous_signature = _sector.layout_signature;
+				_seed = fps_sector_next_seed(_seed);
+			}
+
+			expect(_changed_signatures >= 12).toBeTruthy();
+			for (var _role_index = 0; _role_index < FPS_SECTOR_TILE_COUNT; _role_index += 1) {
+				for (var _variant_index = 0; _variant_index < FPS_SECTOR_TILE_VARIANT_COUNT; _variant_index += 1) {
+					expect(_role_variant_seen[_role_index][_variant_index]).toBeTruthy();
+				}
 			}
 		});
 	});

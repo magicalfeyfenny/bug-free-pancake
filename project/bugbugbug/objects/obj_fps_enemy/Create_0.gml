@@ -15,6 +15,15 @@ hit_sphere_height = 58;
 hit_sphere_radius = 44;
 hit_flash_frames = 0;
 
+var _player = instance_find(obj_fps_controller, 0);
+if (instance_exists(_player) && variable_instance_exists(_player, "sector")) {
+	var _socket = fps_sector_combat_socket(_player.sector, 0);
+	if (is_struct(_socket)) {
+		x = _socket.x;
+		y = _socket.y;
+	}
+}
+
 /// Applies a weapon hit once and announces victory when health reaches zero.
 take_damage = method(id, function(_amount) {
 	if (alive) {

@@ -76,38 +76,62 @@ function fps_load_vertex_buffer(_relative_path, _format) {
 	return _vertex_buffer;
 }
 
-/// Builds the arena once so normal frames only submit frozen geometry.
-function fps_build_arena_buffer(_format, _width, _height, _wall_height, _wall_thickness) {
+/// Chooses a readable floor treatment for each generated space role and variant.
+function fps_sector_floor_colour(_tile) {
+	var _base_colour = make_color_rgb(24, 36, 50);
+	switch (_tile.role) {
+		case FPS_SECTOR_ROLE_START: _base_colour = make_color_rgb(22, 63, 78); break;
+		case FPS_SECTOR_ROLE_CONNECTOR: _base_colour = make_color_rgb(35, 40, 67); break;
+		case FPS_SECTOR_ROLE_COMBAT: _base_colour = make_color_rgb(72, 31, 48); break;
+		case FPS_SECTOR_ROLE_REWARD: _base_colour = make_color_rgb(76, 58, 27); break;
+		case FPS_SECTOR_ROLE_LORE: _base_colour = make_color_rgb(25, 70, 71); break;
+		case FPS_SECTOR_ROLE_FINALE: _base_colour = make_color_rgb(64, 39, 80); break;
+	}
+
+	if (_tile.variant == 1) {
+		return merge_color(_base_colour, c_white, 0.12);
+	}
+	if (_tile.variant == 2) {
+		return merge_color(_base_colour, c_black, 0.12);
+	}
+
+	return _base_colour;
+}
+
+/// Builds every generated tile, connector wall, and aligned solid once per room.
+function fps_build_sector_buffer(_format, _sector) {
 	var _buffer = vertex_create_buffer();
 	vertex_begin(_buffer, _format);
 
-	var _tile_size = 128;
-	var _tile_y = 0;
-	var _row = 0;
-	while (_tile_y < _height) {
-		var _tile_x = 0;
-		var _column = 0;
-		while (_tile_x < _width) {
-			var _floor_colour = make_color_rgb(18, 30, 42);
-			if ((_row + _column) mod 2 == 0) {
-				_floor_colour = make_color_rgb(22, 38, 52);
-			}
+	var _tile_count = array_length(_sector.tiles);
+	for (var _tile_index = 0; _tile_index < _tile_count; _tile_index += 1) {
+		var _tile = _sector.tiles[_tile_index];
+		var _floor_colour = fps_sector_floor_colour(_tile);
+		fps_append_quad(
+			_buffer,
+			_tile.left, _tile.top, 0,
+			_tile.right, _tile.top, 0,
+			_tile.right, _tile.bottom, 0,
+			_tile.left, _tile.bottom, 0,
+			_floor_colour
+		);
 
-			fps_append_quad(
-				_buffer,
-				_tile_x, _tile_y, 0,
-				min(_width, _tile_x + _tile_size), _tile_y, 0,
-				min(_width, _tile_x + _tile_size), min(_height, _tile_y + _tile_size), 0,
-				_tile_x, min(_height, _tile_y + _tile_size), 0,
-				_floor_colour
-			);
-			_tile_x += _tile_size;
-			_column += 1;
-		}
-		_tile_y += _tile_size;
-		_row += 1;
+		// A thin role-colour stripe makes the tile boundary readable at a distance.
+		var _stripe_colour = merge_color(_floor_colour, c_white, 0.28);
+		fps_append_quad(
+			_buffer,
+			_tile.left + 8, _tile.top + 8, 1,
+			_tile.right - 8, _tile.top + 8, 1,
+			_tile.right - 8, _tile.top + 13, 1,
+			_tile.left + 8, _tile.top + 13, 1,
+			_stripe_colour
+		);
 	}
 
+	var _width = _sector.width;
+	var _height = _sector.height;
+	var _wall_height = _sector.wall_height;
+	var _wall_thickness = _sector.wall_thickness;
 	var _wall_colour = make_color_rgb(48, 58, 78);
 	var _ceiling_colour = make_color_rgb(13, 17, 28);
 	fps_append_quad(
@@ -123,23 +147,22 @@ function fps_build_arena_buffer(_format, _width, _height, _wall_height, _wall_th
 	fps_append_box(_buffer, 0, _wall_thickness, 0, _wall_thickness, _height - _wall_thickness, _wall_height, _wall_colour);
 	fps_append_box(_buffer, _width - _wall_thickness, _wall_thickness, 0, _width, _height - _wall_thickness, _wall_height, _wall_colour);
 
-	var _accent = make_color_rgb(30, 185, 215);
-	fps_append_quad(
-		_buffer,
-		_wall_thickness + 0.5, _wall_thickness + 0.5, 82,
-		_width - _wall_thickness - 0.5, _wall_thickness + 0.5, 82,
-		_width - _wall_thickness - 0.5, _wall_thickness + 0.5, 88,
-		_wall_thickness + 0.5, _wall_thickness + 0.5, 88,
-		_accent
-	);
-	fps_append_quad(
-		_buffer,
-		_width - _wall_thickness - 0.5, _height - _wall_thickness - 0.5, 82,
-		_wall_thickness + 0.5, _height - _wall_thickness - 0.5, 82,
-		_wall_thickness + 0.5, _height - _wall_thickness - 0.5, 88,
-		_width - _wall_thickness - 0.5, _height - _wall_thickness - 0.5, 88,
-		_accent
-	);
+	var _solid_count = array_length(_sector.solids);
+	for (var _solid_index = 0; _solid_index < _solid_count; _solid_index += 1) {
+		var _solid = _sector.solids[_solid_index];
+		fps_append_box(_buffer, _solid.x1, _solid.y1, 0, _solid.x2, _solid.y2, _solid.height, _solid.colour);
+	}
+
+	var _exit = _sector.exit_socket;
+	if (is_struct(_exit)) {
+		// The marker is decorative; the socket itself remains clear for movement.
+		fps_append_box(
+			_buffer,
+			_exit.x - 10, _exit.y - 10, 0,
+			_exit.x + 10, _exit.y + 10, 92,
+			make_color_rgb(92, 244, 184)
+		);
+	}
 
 	vertex_end(_buffer);
 	vertex_freeze(_buffer);

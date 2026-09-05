@@ -80,3 +80,88 @@ suite(function() {
 		});
 	});
 });
+
+suite(function() {
+	describe("Generated containment sectors", function() {
+		it("replays the same layout and placements for the same seed", function() {
+			var _first = fps_sector_generate(13579, 1366, 768, 24, 200);
+			var _second = fps_sector_generate(13579, 1366, 768, 24, 200);
+
+			expect(_first.layout_signature).toBe(_second.layout_signature);
+			expect(_first.start_socket.x).toBe(_second.start_socket.x);
+			expect(_first.start_socket.y).toBe(_second.start_socket.y);
+			expect(_first.exit_socket.x).toBe(_second.exit_socket.x);
+			expect(_first.exit_socket.y).toBe(_second.exit_socket.y);
+		});
+
+		it("changes role order or tile treatment for a different seed", function() {
+			var _first = fps_sector_generate(13579, 1366, 768, 24, 200);
+			var _second = fps_sector_generate(24680, 1366, 768, 24, 200);
+			expect(_first.layout_signature == _second.layout_signature).toBeFalsy();
+		});
+
+		it("contains every required role and six discoverable archive sockets", function() {
+			var _sector = fps_sector_generate(97531, 1366, 768, 24, 200);
+			var _roles_seen = array_create(FPS_SECTOR_TILE_COUNT, false);
+			var _lore_count = 0;
+			var _tile_count = array_length(_sector.tiles);
+			for (var _tile_index = 0; _tile_index < _tile_count; _tile_index += 1) {
+				_roles_seen[_sector.tiles[_tile_index].role] = true;
+			}
+			for (var _role_index = 0; _role_index < FPS_SECTOR_TILE_COUNT; _role_index += 1) {
+				expect(_roles_seen[_role_index]).toBeTruthy();
+			}
+
+			var _socket_count = array_length(_sector.sockets);
+			for (var _socket_index = 0; _socket_index < _socket_count; _socket_index += 1) {
+				if (_sector.sockets[_socket_index].kind == "lore") {
+					_lore_count += 1;
+				}
+			}
+			expect(_lore_count).toBe(FPS_SECTOR_TILE_COUNT);
+		});
+
+		it("keeps solids disjoint, sockets clear, and the required route open", function() {
+			var _sector = fps_sector_generate(112233, 1366, 768, 24, 200);
+			var _solids_are_disjoint = true;
+			var _solid_count = array_length(_sector.solids);
+			for (var _first_index = 0; _first_index < _solid_count; _first_index += 1) {
+				for (var _second_index = _first_index + 1; _second_index < _solid_count; _second_index += 1) {
+					if (fps_sector_rects_overlap(_sector.solids[_first_index], _sector.solids[_second_index])) {
+						_solids_are_disjoint = false;
+					}
+				}
+			}
+			expect(_solids_are_disjoint).toBeTruthy();
+			expect(fps_sector_center_path_is_clear(_sector, 22)).toBeTruthy();
+
+			var _socket_count = array_length(_sector.sockets);
+			for (var _socket_index = 0; _socket_index < _socket_count; _socket_index += 1) {
+				var _socket = _sector.sockets[_socket_index];
+				expect(fps_sector_position_is_clear(_sector, _socket.x, _socket.y, _socket.radius)).toBeTruthy();
+			}
+		});
+
+		it("shares centered connectors while blocking wall-side sight lines", function() {
+			var _sector = fps_sector_generate(445566, 1366, 768, 24, 200);
+			for (var _tile_index = 0; _tile_index < FPS_SECTOR_TILE_COUNT - 1; _tile_index += 1) {
+				var _tile = _sector.tiles[_tile_index];
+				var _next_tile = _sector.tiles[_tile_index + 1];
+				expect(_tile.east_connector).toBeTruthy();
+				expect(_next_tile.west_connector).toBeTruthy();
+				expect(fps_sector_line_blocked(_sector, _tile.center_x, _tile.top + 48, _next_tile.center_x, _next_tile.top + 48)).toBeTruthy();
+				expect(fps_sector_line_blocked(_sector, _tile.center_x, _tile.center_y, _next_tile.center_x, _next_tile.center_y)).toBeFalsy();
+			}
+		});
+
+		it("returns six readable lore entries", function() {
+			var _entries = fps_create_lore_entries();
+			expect(array_length(_entries)).toBe(FPS_SECTOR_TILE_COUNT);
+			for (var _entry_index = 0; _entry_index < array_length(_entries); _entry_index += 1) {
+				expect(string_length(_entries[_entry_index].id) > 0).toBeTruthy();
+				expect(string_length(_entries[_entry_index].title) > 0).toBeTruthy();
+				expect(string_length(_entries[_entry_index].text) > 0).toBeTruthy();
+			}
+		});
+	});
+});

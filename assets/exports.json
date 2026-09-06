@@ -12,7 +12,11 @@
       "runtime": [
         "assets/runtime/models/enemy_chaser.vbuff",
         "assets/runtime/models/enemy_chaser_hit.vbuff"
-      ]
+      ],
+      "destination": {
+        "kind": "included-file",
+        "file_contract": "The model renderer loads the packaged models/enemy_chaser.vbuff and models/enemy_chaser_hit.vbuff files with buffer_load and creates native vertex buffers from their bytes."
+      }
     },
     {
       "kind": "model_3d",
@@ -25,7 +29,11 @@
       "runtime": [
         "assets/runtime/models/enemy_skirmisher.vbuff",
         "assets/runtime/models/enemy_skirmisher_hit.vbuff"
-      ]
+      ],
+      "destination": {
+        "kind": "included-file",
+        "file_contract": "The model renderer loads the packaged models/enemy_skirmisher.vbuff and models/enemy_skirmisher_hit.vbuff files with buffer_load and creates native vertex buffers from their bytes."
+      }
     }
   ]
 }

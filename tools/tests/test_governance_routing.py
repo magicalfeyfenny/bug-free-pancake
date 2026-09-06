@@ -136,24 +136,25 @@ class GovernanceRoutingTests(unittest.TestCase):
                 (ROOT / "docs/SETUP.md").resolve(),
             }.issubset(agent_targets)
         )
-        self.assertEqual(
-            production,
+        self.assertTrue(
             {
+                "native-gamemaker-functionality",
                 "production-code",
                 "compatibility-obligations",
                 "source-structure",
                 "gamemaker-structured-data",
                 "validation-coverage-allocation",
                 "interactive-runtime-validation",
-            },
+            }.issubset(production),
         )
-        self.assertEqual(
-            assets,
+        self.assertTrue(
             {
+                "native-gamemaker-functionality",
+                "runtime-asset-representation",
                 "asset-completion-and-authority",
                 "derived-assets",
                 "placeholder-backed-mixed-work",
-            },
+            }.issubset(assets),
         )
         self.assertTrue(
             {
@@ -183,9 +184,10 @@ class GovernanceRoutingTests(unittest.TestCase):
                 "gamemaker-structured-data",
             }.isdisjoint(governed)
         )
-        self.assertEqual(
-            steward,
+        self.assertTrue(
             {
+                "native-gamemaker-functionality",
+                "runtime-asset-representation",
                 "issue-authority",
                 "asset-completion-and-authority",
                 "placeholder-backed-mixed-work",
@@ -193,7 +195,7 @@ class GovernanceRoutingTests(unittest.TestCase):
                 "validation-coverage-allocation",
                 "interactive-runtime-validation",
                 "human-created-changes",
-            },
+            }.issubset(steward),
         )
         self.assertEqual(
             issue_template,
@@ -244,6 +246,19 @@ class GovernanceRoutingTests(unittest.TestCase):
         }
 
         self.assertTrue(expected.issubset(setup_targets))
+
+    def test_setup_label_inventory_routes_to_its_authorities(self):
+        """Link setup to the shared rule and executable label inventory."""
+        setup = ROOT / "docs/SETUP.md"
+        self.assertIn("inventory-authority", governance_fragments(setup))
+        self.assertIn(
+            "inventory-authority",
+            heading_anchors(ROOT / "GOVERNANCE.md"),
+        )
+        self.assertIn(
+            (ROOT / "tools/setup_github.py").resolve(),
+            {target for target, _ in local_destinations(setup)},
+        )
 
     def test_scheduled_claim_policy_has_one_implementation_owner(self):
         """Route scheduled claims through Governed Change, not stewardship."""

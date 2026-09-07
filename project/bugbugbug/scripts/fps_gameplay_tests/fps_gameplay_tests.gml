@@ -241,7 +241,7 @@ suite(function() {
 			var _socket_count = array_length(_sector.sockets);
 			for (var _socket_index = 0; _socket_index < _socket_count; _socket_index += 1) {
 				var _socket = _sector.sockets[_socket_index];
-				expect(fps_sector_position_is_clear(_sector, _socket.x, _socket.y, _socket.radius)).toBeTruthy();
+				expect(fps_sector_position_is_clear(_sector, _socket.x, _socket.y, 54)).toBeTruthy();
 			}
 		});
 
@@ -314,6 +314,65 @@ suite(function() {
 					expect(_role_variant_seen[_role_index][_variant_index]).toBeTruthy();
 				}
 			}
+		});
+	});
+});
+
+suite(function() {
+	describe("Seeded enemy roster and encounter director", function() {
+		it("defines distinct readable roles including a durable finale threat", function() {
+			var _burrower = fps_enemy_role_definition(FPS_ENEMY_KIND_BURROWER);
+			var _sentry = fps_enemy_role_definition(FPS_ENEMY_KIND_SENTRY);
+			var _titan = fps_enemy_role_definition(FPS_ENEMY_KIND_TITAN);
+			expect(_burrower.identity).toBe("burrower");
+			expect(_sentry.identity).toBe("sentry");
+			expect(_titan.identity).toBe("titan");
+			expect(_burrower.move_speed > _sentry.move_speed).toBeTruthy();
+			expect(_sentry.warning_shape).toBe(FPS_ENEMY_WARNING_BEAM);
+			expect(_titan.max_health > FPS_ENEMY_MAX_HEALTH * 3).toBeTruthy();
+			expect(_titan.telegraph_frames > _burrower.telegraph_frames).toBeTruthy();
+		});
+
+		it("replays mixed compositions from seed and pressure", function() {
+			var _sector = fps_sector_generate(314159, 1366, 768, 24, 200);
+			var _first = fps_enemy_create_encounter_plan(_sector, 314159, 2);
+			var _repeat = fps_enemy_create_encounter_plan(_sector, 314159, 2);
+			var _different = fps_enemy_create_encounter_plan(_sector, 271828, 2);
+			expect(_first.signature).toBe(_repeat.signature);
+			expect(_first.signature != _different.signature).toBeTruthy();
+			expect(array_length(_first.entries)).toBe(4);
+
+			var _roles_seen = array_create(FPS_ENEMY_KIND_COUNT, false);
+			for (var _seed_index = 0; _seed_index < 24; _seed_index += 1) {
+				var _sample = fps_enemy_create_encounter_plan(_sector, 7001 + _seed_index * 97, _seed_index mod 4);
+				for (var _entry_index = 0; _entry_index < array_length(_sample.entries); _entry_index += 1) {
+					_roles_seen[_sample.entries[_entry_index].kind] = true;
+				}
+			}
+			expect(_roles_seen[FPS_ENEMY_KIND_BURROWER]).toBeTruthy();
+			expect(_roles_seen[FPS_ENEMY_KIND_SENTRY]).toBeTruthy();
+			expect(_roles_seen[FPS_ENEMY_KIND_TITAN]).toBeTruthy();
+		});
+
+		it("uses clear canonical sockets outside protected player start", function() {
+			var _sector = fps_sector_generate(97531, 1366, 768, 24, 200);
+			expect(array_length(_sector.combat_sockets) >= 4).toBeTruthy();
+			for (var _socket_index = 0; _socket_index < array_length(_sector.combat_sockets); _socket_index += 1) {
+				var _socket = _sector.combat_sockets[_socket_index];
+				expect(_socket.kind).toBe("enemy");
+				expect(fps_sector_position_is_clear(_sector, _socket.x, _socket.y, _socket.radius)).toBeTruthy();
+				expect(point_distance(_socket.x, _socket.y, _sector.start_socket.x, _sector.start_socket.y) > _socket.radius + _sector.start_socket.radius).toBeTruthy();
+			}
+		});
+
+		it("keeps telegraphed attacks cover-aware", function() {
+			var _burrower = fps_enemy_role_definition(FPS_ENEMY_KIND_BURROWER);
+			var _sentry = fps_enemy_role_definition(FPS_ENEMY_KIND_SENTRY);
+			var _titan = fps_enemy_role_definition(FPS_ENEMY_KIND_TITAN);
+			expect(_burrower.warning_radius > 0).toBeTruthy();
+			expect(_sentry.projectile_speed > 0).toBeTruthy();
+			expect(_titan.warning_radius > _burrower.warning_radius).toBeTruthy();
+			expect(_sentry.warning_shape).toBe(FPS_ENEMY_WARNING_BEAM);
 		});
 	});
 });

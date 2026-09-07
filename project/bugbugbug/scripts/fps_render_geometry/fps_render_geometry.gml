@@ -188,3 +188,40 @@ function fps_build_unit_box_buffer(_format, _colour) {
 	vertex_freeze(_buffer);
 	return _buffer;
 }
+
+/// Builds a native, editable-at-the-engine silhouette for a non-authored role.
+function fps_build_enemy_role_buffer(_format, _kind, _hit) {
+	var _base_colour = fps_enemy_role_definition(_kind).colour;
+	if (_hit) {
+		_base_colour = merge_color(_base_colour, c_white, 0.68);
+	}
+
+	var _buffer = vertex_create_buffer();
+	vertex_begin(_buffer, _format);
+	switch (_kind) {
+		case FPS_ENEMY_KIND_BURROWER:
+			fps_append_box(_buffer, -0.78, -0.48, 0, 0.78, 0.48, 0.62, _base_colour);
+			fps_append_box(_buffer, 0.40, -0.32, 0.18, 1.12, 0.32, 0.50, _base_colour);
+			fps_append_box(_buffer, -0.56, -0.70, 0.10, -0.14, -0.44, 0.42, _base_colour);
+			fps_append_box(_buffer, -0.56, 0.44, 0.10, -0.14, 0.70, 0.42, _base_colour);
+			break;
+		case FPS_ENEMY_KIND_SENTRY:
+			fps_append_box(_buffer, -0.48, -0.48, 0, 0.48, 0.48, 0.30, _base_colour);
+			fps_append_box(_buffer, -0.30, -0.30, 0.30, 0.30, 0.30, 1.42, _base_colour);
+			fps_append_box(_buffer, -0.78, -0.16, 0.56, -0.24, 0.16, 0.82, _base_colour);
+			fps_append_box(_buffer, 0.24, -0.16, 0.56, 0.78, 0.16, 0.82, _base_colour);
+			fps_append_box(_buffer, -0.18, -0.18, 1.42, 0.18, 0.18, 1.76, _base_colour);
+			break;
+		case FPS_ENEMY_KIND_TITAN:
+			fps_append_box(_buffer, -0.86, -0.62, 0, 0.86, 0.62, 0.46, _base_colour);
+			fps_append_box(_buffer, -0.58, -0.48, 0.46, 0.58, 0.48, 1.52, _base_colour);
+			fps_append_box(_buffer, -1.02, -0.78, 0.64, -0.50, 0.78, 1.18, _base_colour);
+			fps_append_box(_buffer, 0.50, -0.78, 0.64, 1.02, 0.78, 1.18, _base_colour);
+			fps_append_box(_buffer, -0.34, -0.30, 1.52, 0.34, 0.30, 1.92, _base_colour);
+			break;
+	}
+
+	vertex_end(_buffer);
+	vertex_freeze(_buffer);
+	return _buffer;
+}

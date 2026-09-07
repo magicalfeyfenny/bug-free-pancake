@@ -74,15 +74,40 @@ for (var _enemy_index = 0; _enemy_index < _enemy_count; _enemy_index += 1) {
 		continue;
 	}
 
-	var _enemy_mesh = enemy_buffer;
-	if (_enemy.enemy_kind == FPS_ENEMY_KIND_RANGED) {
-		_enemy_mesh = ranged_enemy_buffer;
+	var _enemy_kind = clamp(floor(_enemy.enemy_kind), 0, FPS_ENEMY_KIND_COUNT - 1);
+	if (_enemy.telegraph_frames > 0) {
+		var _warning_angle = point_direction(_enemy.x, _enemy.y, x, y);
+		var _warning_x = _enemy.x;
+		var _warning_y = _enemy.y;
+		var _warning_scale_x = _enemy.warning_radius * 2;
+		var _warning_scale_y = _enemy.warning_radius * 2;
+		if (_enemy.warning_shape == FPS_ENEMY_WARNING_BEAM) {
+			var _warning_length = min(point_distance(_enemy.x, _enemy.y, x, y), _enemy.attack_range);
+			_warning_x += lengthdir_x(_warning_length * 0.5, _warning_angle);
+			_warning_y += lengthdir_y(_warning_length * 0.5, _warning_angle);
+			_warning_scale_x = _enemy.warning_radius * 2;
+			_warning_scale_y = max(24, _warning_length);
+		}
+		matrix_set(
+			matrix_world,
+			matrix_build(
+				_warning_x,
+				_warning_y,
+				1.5,
+				0,
+				0,
+				_warning_angle,
+				_warning_scale_x,
+				_warning_scale_y,
+				0.08
+			)
+		);
+		vertex_submit(enemy_warning_buffer, pr_trianglelist, -1);
 	}
-	if (_enemy.hit_flash_frames > 0) {
-		_enemy_mesh = _enemy.enemy_kind == FPS_ENEMY_KIND_RANGED
-			? ranged_enemy_hit_buffer
-			: enemy_hit_buffer;
-	}
+
+	var _enemy_mesh = _enemy.hit_flash_frames > 0
+		? enemy_hit_buffers[_enemy_kind]
+		: enemy_buffers[_enemy_kind];
 
 	var _facing = point_direction(_enemy.x, _enemy.y, x, y);
 	matrix_set(

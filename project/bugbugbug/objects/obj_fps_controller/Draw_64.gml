@@ -73,6 +73,7 @@ draw_text(
 );
 
 var _enemy_count = instance_number(obj_fps_enemy);
+var _enemy_row = 0;
 for (var _enemy_index = 0; _enemy_index < _enemy_count; _enemy_index += 1) {
 	var _enemy = instance_find(obj_fps_enemy, _enemy_index);
 	if (
@@ -84,13 +85,10 @@ for (var _enemy_index = 0; _enemy_index < _enemy_count; _enemy_index += 1) {
 		continue;
 	}
 
-	var _is_ranged = _enemy.enemy_kind == FPS_ENEMY_KIND_RANGED;
-	var _label_y = _is_ranged ? 86 : 34;
-	var _bar_y = _is_ranged ? 105 : 53;
-	var _hostile_name = _is_ranged ? "SKIRMISHER" : "CHASER";
-	var _health_colour = _is_ranged
-		? make_color_rgb(122, 104, 238)
-		: make_color_rgb(225, 51, 89);
+	var _label_y = 34 + _enemy_row * 44;
+	var _bar_y = 53 + _enemy_row * 44;
+	var _hostile_name = _enemy.enemy_label;
+	var _health_colour = _enemy.health_colour;
 
 	draw_set_halign(fa_right);
 	draw_set_color(c_white);
@@ -109,6 +107,7 @@ for (var _enemy_index = 0; _enemy_index < _enemy_count; _enemy_index += 1) {
 		_bar_y + 16,
 		false
 	);
+	_enemy_row += 1;
 }
 
 // The centered weapon silhouette and recoil make every shot readable without art assets.

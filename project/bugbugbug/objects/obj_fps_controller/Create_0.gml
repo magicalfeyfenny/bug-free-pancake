@@ -36,6 +36,8 @@ lore_index = -1;
 
 loadout = fps_weapon_create_loadout();
 pickups = fps_weapon_create_pickups(sector, sector_seed);
+encounter_pressure = fps_enemy_encounter_pressure(sector_seed);
+encounter_plan = fps_enemy_create_encounter_plan(sector, sector_seed, encounter_pressure);
 pickup_notice = "PULSE RIFLE READY";
 pickup_notice_frames = 90;
 pickup_spin = 0;
@@ -165,8 +167,29 @@ enemy_buffer = fps_load_vertex_buffer("models/enemy_chaser.vbuff", geometry_form
 enemy_hit_buffer = fps_load_vertex_buffer("models/enemy_chaser_hit.vbuff", geometry_format);
 ranged_enemy_buffer = fps_load_vertex_buffer("models/enemy_skirmisher.vbuff", geometry_format);
 ranged_enemy_hit_buffer = fps_load_vertex_buffer("models/enemy_skirmisher_hit.vbuff", geometry_format);
+burrower_buffer = fps_build_enemy_role_buffer(geometry_format, FPS_ENEMY_KIND_BURROWER, false);
+burrower_hit_buffer = fps_build_enemy_role_buffer(geometry_format, FPS_ENEMY_KIND_BURROWER, true);
+sentry_buffer = fps_build_enemy_role_buffer(geometry_format, FPS_ENEMY_KIND_SENTRY, false);
+sentry_hit_buffer = fps_build_enemy_role_buffer(geometry_format, FPS_ENEMY_KIND_SENTRY, true);
+titan_buffer = fps_build_enemy_role_buffer(geometry_format, FPS_ENEMY_KIND_TITAN, false);
+titan_hit_buffer = fps_build_enemy_role_buffer(geometry_format, FPS_ENEMY_KIND_TITAN, true);
+enemy_buffers = [enemy_buffer, ranged_enemy_buffer, burrower_buffer, sentry_buffer, titan_buffer];
+enemy_hit_buffers = [enemy_hit_buffer, ranged_enemy_hit_buffer, burrower_hit_buffer, sentry_hit_buffer, titan_hit_buffer];
 enemy_projectile_buffer = fps_build_unit_box_buffer(geometry_format, make_color_rgb(255, 190, 45));
+enemy_warning_buffer = fps_build_unit_box_buffer(geometry_format, make_color_rgb(255, 114, 74));
 pickup_meshes = [];
 for (var _pickup_kind = 0; _pickup_kind < FPS_PICKUP_COUNT; _pickup_kind += 1) {
 	array_push(pickup_meshes, fps_build_unit_box_buffer(geometry_format, fps_weapon_pickup_colour(_pickup_kind)));
+}
+
+var _encounter_entry_count = array_length(encounter_plan.entries);
+for (var _encounter_entry_index = 0; _encounter_entry_index < _encounter_entry_count; _encounter_entry_index += 1) {
+	var _encounter_entry = encounter_plan.entries[_encounter_entry_index];
+	var _encounter_socket = sector.combat_sockets[_encounter_entry.socket_index];
+	var _enemy = instance_create_layer(_encounter_socket.x, _encounter_socket.y, "Gameplay", obj_fps_enemy);
+	fps_enemy_apply_role(_enemy, _encounter_entry.kind);
+	_enemy.spawn_socket_id = _encounter_entry.socket_id;
+	_enemy.spawn_tile_index = _encounter_entry.tile_index;
+	_enemy.x = _encounter_socket.x;
+	_enemy.y = _encounter_socket.y;
 }

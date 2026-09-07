@@ -1,18 +1,4 @@
-max_health = FPS_ENEMY_MAX_HEALTH;
-current_health = max_health;
-alive = true;
-enemy_kind = FPS_ENEMY_KIND_CHASER;
-
-move_speed = 1.8;
-collision_radius = 24;
-stop_distance = 92;
-attack_range = 118;
-attack_damage = 15;
-attack_delay = 45;
-attack_cooldown = attack_delay;
-
-hit_sphere_height = 58;
-hit_sphere_radius = 44;
+fps_enemy_apply_role(id, FPS_ENEMY_KIND_CHASER);
 hit_flash_frames = 0;
 
 var _player = instance_find(obj_fps_controller, 0);

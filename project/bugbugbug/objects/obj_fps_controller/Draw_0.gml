@@ -36,6 +36,32 @@ gpu_set_cullmode(cull_noculling);
 
 vertex_submit(arena_buffer, pr_trianglelist, -1);
 
+var _pickup_count = array_length(pickups);
+for (var _pickup_index = 0; _pickup_index < _pickup_count; _pickup_index += 1) {
+	var _pickup = pickups[_pickup_index];
+	if (_pickup.collected) {
+		continue;
+	}
+
+	var _pickup_height = 18 + 5 * dsin(pickup_spin + _pickup_index * 42);
+	var _pickup_scale = fps_weapon_pickup_scale(_pickup.kind);
+	matrix_set(
+		matrix_world,
+		matrix_build(
+			_pickup.x,
+			_pickup.y,
+			_pickup_height,
+			0,
+			0,
+			pickup_spin + _pickup_index * 42,
+			_pickup_scale,
+			_pickup_scale,
+			_pickup_scale * 1.7
+		)
+	);
+	vertex_submit(pickup_meshes[_pickup.kind], pr_trianglelist, -1);
+}
+
 var _enemy_count = instance_number(obj_fps_enemy);
 for (var _enemy_index = 0; _enemy_index < _enemy_count; _enemy_index += 1) {
 	var _enemy = instance_find(obj_fps_enemy, _enemy_index);

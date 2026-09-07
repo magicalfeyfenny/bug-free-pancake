@@ -18,6 +18,41 @@ draw_rectangle(40, 53, 40 + 270 * current_health / max_health, 69, false);
 draw_set_color(c_white);
 draw_text(40, 34, "VITALS  " + string(current_health) + " / " + string(max_health));
 
+var _current_definition = fps_weapon_current_definition(loadout);
+var _current_state = fps_weapon_current_state(loadout);
+draw_set_color(_current_definition.colour);
+draw_text(40, 88, _current_definition.label + "  [" + string(loadout.current_index + 1) + "]");
+draw_set_color(c_white);
+draw_text(
+	40,
+	108,
+	"MAG " + string(_current_state.magazine) + " / " + string(_current_definition.magazine_size)
+		+ "   RES " + string(_current_state.reserve)
+		+ "   " + _current_definition.pattern
+);
+draw_set_color(make_color_rgb(51, 63, 79));
+draw_rectangle(40, 128, 310, 136, false);
+draw_set_color(_current_definition.colour);
+draw_rectangle(
+	40,
+	128,
+	40 + 270 * _current_state.magazine / _current_definition.magazine_size,
+	136,
+	false
+);
+draw_set_color(c_white);
+var _weapon_strip = "";
+for (var _weapon_index = 0; _weapon_index < FPS_WEAPON_COUNT; _weapon_index += 1) {
+	var _weapon_state = loadout.states[_weapon_index];
+	var _weapon_definition = fps_weapon_definition(_weapon_index);
+	_weapon_strip += (_weapon_state.owned ? string(_weapon_index + 1) + ":" + _weapon_definition.identity : string(_weapon_index + 1) + ":LOCKED") + "   ";
+}
+draw_text(40, 148, _weapon_strip);
+if (loadout.overcharge_frames > 0) {
+	draw_set_color(make_color_rgb(118, 224, 255));
+	draw_text(40, 168, "OVERCHARGE  " + string(ceil(loadout.overcharge_frames / 60)) + "s");
+}
+
 var _tile_index = fps_sector_tile_at(sector, x, y);
 var _tile_label = _tile_index >= 0 ? sector.tiles[_tile_index].role_name : "TRANSIT";
 var _archive_count = 0;
@@ -81,11 +116,11 @@ var _weapon_y = _gui_height - 98 + recoil * 12;
 draw_set_halign(fa_left);
 draw_set_color(make_color_rgb(20, 27, 38));
 draw_rectangle(_center_x - 82, _weapon_y, _center_x + 82, _gui_height + 8, false);
-draw_set_color(make_color_rgb(76, 95, 119));
+draw_set_color(merge_color(_current_definition.colour, c_white, 0.2));
 draw_rectangle(_center_x - 52, _weapon_y - 56, _center_x + 52, _weapon_y + 22, false);
 draw_set_color(make_color_rgb(28, 36, 48));
 draw_rectangle(_center_x - 18, _weapon_y - 95, _center_x + 18, _weapon_y - 50, false);
-draw_set_color(make_color_rgb(34, 201, 221));
+draw_set_color(_current_definition.colour);
 draw_rectangle(_center_x - 44, _weapon_y - 46, _center_x + 44, _weapon_y - 38, false);
 
 if (muzzle_flash_frames > 0) {
@@ -117,7 +152,21 @@ if (damage_flash_frames > 0) {
 
 draw_set_halign(fa_center);
 draw_set_color(make_color_rgb(184, 199, 216));
-draw_text(_center_x, _gui_height - 34, "WASD MOVE   •   MOUSE AIM   •   LEFT CLICK FIRE   •   E READ   •   N NEW SEED   •   ESC RELEASE MOUSE");
+draw_text(
+	_center_x,
+	_gui_height - 34,
+	"WASD MOVE   •   MOUSE AIM   •   CLICK FIRE   •   1-4/Q SWITCH   •   R RELOAD   •   E INTERACT   •   N NEW SEED   •   ESC RELEASE"
+);
+
+if (phase == FPS_STATE_PLAYING && pickup_notice_frames > 0) {
+	draw_set_alpha(0.78);
+	draw_set_color(c_black);
+	draw_rectangle(_center_x - 250, _center_y - 158, _center_x + 250, _center_y - 118, false);
+	draw_set_alpha(1);
+	draw_set_color(make_color_rgb(255, 226, 150));
+	draw_set_valign(fa_middle);
+	draw_text(_center_x, _center_y - 138, pickup_notice);
+}
 
 if (phase != FPS_STATE_PLAYING) {
 	draw_set_alpha(0.78);
@@ -140,6 +189,22 @@ if (phase != FPS_STATE_PLAYING) {
 }
 
 if (phase == FPS_STATE_PLAYING && !lore_open) {
+	var _near_pickup = fps_weapon_near_pickup(pickups, x, y, FPS_WEAPON_PICKUP_RANGE);
+	if (_near_pickup >= 0) {
+		var _pickup = pickups[_near_pickup];
+		var _pickup_label = fps_weapon_pickup_kind_name(_pickup.kind);
+		if (_pickup.kind == FPS_PICKUP_WEAPON) {
+			_pickup_label = "WEAPON CACHE: " + fps_weapon_definition(_pickup.weapon_id).label;
+		}
+		draw_set_alpha(0.78);
+		draw_set_color(c_black);
+		draw_rectangle(_center_x - 250, _center_y + 24, _center_x + 250, _center_y + 64, false);
+		draw_set_alpha(1);
+		draw_set_color(fps_weapon_pickup_colour(_pickup.kind));
+		draw_set_valign(fa_middle);
+		draw_text(_center_x, _center_y + 44, "PRESS E TO COLLECT " + _pickup_label);
+	}
+
 	var _near_lore = fps_sector_near_lore(sector, x, y, 72);
 	if (_near_lore >= 0) {
 		draw_set_alpha(0.78);

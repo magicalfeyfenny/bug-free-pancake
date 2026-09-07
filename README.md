@@ -2,9 +2,10 @@
 
 Containment Protocol is a playable first-person combat prototype for GameMaker
 LTS 2026. The current run explores a deterministic six-space containment sector
-with optional archive entries, while preserving WASD movement, mouse-look
-aiming, a hitscan weapon, a pursuing Chaser, an evasive Skirmisher with visible
-projectiles, health and damage, victory and death, and restart controls.
+with optional archive entries and deterministic supply caches, while preserving
+WASD movement, mouse-look aiming, a four-role weapon arsenal, a pursuing
+Chaser, an evasive Skirmisher with visible projectiles, health and damage,
+victory and death, and restart controls.
 
 Open [project/bugbugbug/bugbugbug.yyp](project/bugbugbug/bugbugbug.yyp) in
 GameMaker to play. See [project/README.md](project/README.md) for controls and

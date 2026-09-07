@@ -82,6 +82,109 @@ suite(function() {
 });
 
 suite(function() {
+	describe("Weapon arsenal and pickup economy", function() {
+		it("defines four materially different usable weapon contracts", function() {
+			var _pulse = fps_weapon_definition(FPS_WEAPON_PULSE);
+			var _scatter = fps_weapon_definition(FPS_WEAPON_SCATTER);
+			var _burst = fps_weapon_definition(FPS_WEAPON_BURST);
+			var _rail = fps_weapon_definition(FPS_WEAPON_RAIL);
+			expect(_pulse.pellets).toBe(1);
+			expect(_scatter.pellets).toBe(5);
+			expect(_burst.pellets).toBe(3);
+			expect(_rail.range > _pulse.range).toBeTruthy();
+			expect(_scatter.fire_delay > _pulse.fire_delay).toBeTruthy();
+			expect(_burst.identity != _scatter.identity).toBeTruthy();
+		});
+
+		it("starts clean, locks unacquired weapons, and switches after acquisition", function() {
+			var _loadout = fps_weapon_create_loadout();
+			expect(fps_weapon_owned_count(_loadout)).toBe(1);
+			expect(fps_weapon_switch(_loadout, FPS_WEAPON_SCATTER)).toBeFalsy();
+
+			var _pickup = {kind: FPS_PICKUP_WEAPON, weapon_id: FPS_WEAPON_SCATTER, collected: false};
+			var _result = fps_weapon_collect_pickup(_loadout, _pickup, 100, 100);
+			expect(_result.consumed).toBeTruthy();
+			expect(fps_weapon_switch(_loadout, FPS_WEAPON_SCATTER)).toBeTruthy();
+			expect(fps_weapon_current_definition(_loadout).id).toBe(FPS_WEAPON_SCATTER);
+			expect(fps_weapon_owned_count(_loadout)).toBe(2);
+		});
+
+		it("consumes rounds, reloads from reserve, and exposes empty state", function() {
+			var _loadout = fps_weapon_create_loadout();
+			var _shot = fps_weapon_start_shot(_loadout);
+			expect(_shot.fired).toBeTruthy();
+			expect(_loadout.states[FPS_WEAPON_PULSE].magazine).toBe(11);
+			_loadout.states[FPS_WEAPON_PULSE].magazine = 0;
+			_loadout.states[FPS_WEAPON_PULSE].reserve = 5;
+			var _reload = fps_weapon_reload(_loadout);
+			expect(_reload.reloaded).toBeTruthy();
+			expect(_reload.moved).toBe(5);
+			_loadout.states[FPS_WEAPON_PULSE].magazine = 0;
+			_loadout.states[FPS_WEAPON_PULSE].reserve = 0;
+			var _empty = fps_weapon_start_shot(_loadout);
+			expect(_empty.fired).toBeFalsy();
+			expect(_empty.reason).toBe("EMPTY");
+		});
+
+		it("retains unusable pickups and applies health, ammo, and overcharge when useful", function() {
+			var _loadout = fps_weapon_create_loadout();
+			var _health = fps_weapon_apply_health_pickup(100, 100);
+			expect(_health.consumed).toBeFalsy();
+			_health = fps_weapon_apply_health_pickup(40, 100);
+			expect(_health.consumed).toBeTruthy();
+			expect(_health.health).toBe(75);
+
+			var _ammo_pickup = {kind: FPS_PICKUP_AMMO, weapon_id: -1, collected: false};
+			var _ammo_result = fps_weapon_collect_pickup(_loadout, _ammo_pickup, 100, 100);
+			expect(_ammo_result.consumed).toBeFalsy();
+			_loadout.states[FPS_WEAPON_PULSE].reserve = 0;
+			_ammo_result = fps_weapon_collect_pickup(_loadout, _ammo_pickup, 100, 100);
+			expect(_ammo_result.consumed).toBeTruthy();
+			expect(_loadout.states[FPS_WEAPON_PULSE].reserve).toBe(FPS_WEAPON_AMMO_PICKUP);
+
+			var _overcharge = {kind: FPS_PICKUP_OVERCHARGE, weapon_id: -1, collected: false};
+			var _overcharge_result = fps_weapon_collect_pickup(_loadout, _overcharge, 100, 100);
+			expect(_overcharge_result.consumed).toBeTruthy();
+			var _charged_shot = fps_weapon_start_shot(_loadout);
+			expect(_charged_shot.damage).toBe(51);
+		});
+
+		it("reproduces seeded cache rewards and clears inventory on a fresh loadout", function() {
+			var _sector = fps_sector_generate(314159, 1366, 768, 24, 200);
+			var _first = fps_weapon_create_pickups(_sector, 314159);
+			var _repeat = fps_weapon_create_pickups(_sector, 314159);
+			var _different = fps_weapon_create_pickups(_sector, 271828);
+			expect(fps_weapon_pickup_signature(_first)).toBe(fps_weapon_pickup_signature(_repeat));
+			expect(fps_weapon_pickup_signature(_first) != fps_weapon_pickup_signature(_different)).toBeTruthy();
+			expect(array_length(_first)).toBe(FPS_SECTOR_TILE_COUNT);
+			var _weapon_kinds = 0;
+			var _health_kinds = 0;
+			var _ammo_kinds = 0;
+			var _overcharge_kinds = 0;
+			for (var _pickup_index = 0; _pickup_index < array_length(_first); _pickup_index += 1) {
+				var _pickup = _first[_pickup_index];
+				expect(fps_sector_position_is_clear(_sector, _pickup.x, _pickup.y, 18)).toBeTruthy();
+				if (_pickup.kind == FPS_PICKUP_WEAPON) _weapon_kinds += 1;
+				if (_pickup.kind == FPS_PICKUP_HEALTH) _health_kinds += 1;
+				if (_pickup.kind == FPS_PICKUP_AMMO) _ammo_kinds += 1;
+				if (_pickup.kind == FPS_PICKUP_OVERCHARGE) _overcharge_kinds += 1;
+			}
+			expect(_weapon_kinds).toBe(3);
+			expect(_health_kinds).toBe(1);
+			expect(_ammo_kinds).toBe(1);
+			expect(_overcharge_kinds).toBe(1);
+
+			var _loadout = fps_weapon_create_loadout();
+			_loadout.states[FPS_WEAPON_SCATTER].owned = true;
+			_loadout.current_index = FPS_WEAPON_SCATTER;
+			var _fresh = fps_weapon_create_loadout();
+			expect(_fresh.current_index).toBe(FPS_WEAPON_PULSE);
+			expect(fps_weapon_owned_count(_fresh)).toBe(1);
+		});
+	});
+});
+
+suite(function() {
 	describe("Generated containment sectors", function() {
 		it("replays the same layout and placements for the same seed", function() {
 			var _first = fps_sector_generate(13579, 1366, 768, 24, 200);

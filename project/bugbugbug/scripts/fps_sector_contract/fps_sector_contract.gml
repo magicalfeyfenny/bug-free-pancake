@@ -316,6 +316,69 @@ function fps_sector_first_clear_point(_sector, _candidates, _radius) {
 	return {x: _fallback[0], y: _fallback[1]};
 }
 
+/// Keeps enemy sockets clear of solids and every previously declared socket.
+function fps_sector_enemy_socket_is_available(_sector, _x, _y, _radius) {
+	if (!fps_sector_position_is_clear(_sector, _x, _y, _radius)) {
+		return false;
+	}
+
+	var _socket_count = array_length(_sector.sockets);
+	for (var _socket_index = 0; _socket_index < _socket_count; _socket_index += 1) {
+		var _socket = _sector.sockets[_socket_index];
+		if (point_distance(_x, _y, _socket.x, _socket.y) <= _radius + _socket.radius + 12) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/// Adds deterministic enemy sockets to combat and finale tiles only.
+function fps_sector_add_enemy_sockets(_sector, _tile) {
+	var _socket_radius = 30;
+	var _candidates = [
+		[
+			[_tile.left + 72, _tile.center_y - 112],
+			[_tile.center_x, _tile.top + 96],
+			[_tile.right - 72, _tile.center_y - 112],
+		],
+		[
+			[_tile.right - 72, _tile.center_y + 112],
+			[_tile.center_x, _tile.bottom - 96],
+			[_tile.left + 72, _tile.center_y + 112],
+		],
+	];
+
+	for (var _candidate_index = 0; _candidate_index < array_length(_candidates); _candidate_index += 1) {
+		var _candidate_set = _candidates[_candidate_index];
+		var _candidate_count = array_length(_candidate_set);
+		for (var _point_index = 0; _point_index < _candidate_count; _point_index += 1) {
+			var _candidate = _candidate_set[_point_index];
+			if (!fps_sector_enemy_socket_is_available(_sector, _candidate[0], _candidate[1], _socket_radius)) {
+				continue;
+			}
+
+			var _socket_id = "finale-enemy-" + string(_candidate_index + 1);
+			if (_tile.role == FPS_SECTOR_ROLE_COMBAT) {
+				_socket_id = _candidate_index == 0 ? "combat-chaser" : "combat-ranged";
+			}
+			var _socket = fps_sector_make_socket(
+				_socket_id,
+				"enemy",
+				_tile.role,
+				_tile.index,
+				_candidate[0],
+				_candidate[1],
+				_socket_radius,
+				-1
+			);
+			array_push(_sector.combat_sockets, _socket);
+			array_push(_sector.sockets, _socket);
+			break;
+		}
+	}
+}
+
 /// Creates one stable socket used by actors, lore, and the exit marker.
 function fps_sector_make_socket(_id, _kind, _role, _tile_index, _x, _y, _radius, _entry_index) {
 	return {
@@ -440,25 +503,12 @@ function fps_sector_generate(_seed, _width, _height, _wall_thickness, _wall_heig
 			array_push(_sector.sockets, _sector.start_socket);
 		}
 
-		if (_socket_tile.role == FPS_SECTOR_ROLE_COMBAT) {
-			var _chaser_candidates = [
-				[_socket_tile.left + 72, _socket_tile.center_y - 96],
-				[_socket_tile.left + 72, _socket_tile.center_y + 96],
-				[_socket_tile.center_x, _socket_tile.center_y - 96],
-			];
-			var _ranged_candidates = [
-				[_socket_tile.right - 72, _socket_tile.center_y + 96],
-				[_socket_tile.right - 72, _socket_tile.center_y - 96],
-				[_socket_tile.center_x, _socket_tile.center_y + 96],
-			];
-			var _chaser_point = fps_sector_first_clear_point(_sector, _chaser_candidates, 24);
-			var _ranged_point = fps_sector_first_clear_point(_sector, _ranged_candidates, 48);
-			var _chaser_socket = fps_sector_make_socket("combat-chaser", "combat-chaser", _socket_tile.role, _socket_tile_index, _chaser_point.x, _chaser_point.y, 24, -1);
-			var _ranged_socket = fps_sector_make_socket("combat-ranged", "combat-ranged", _socket_tile.role, _socket_tile_index, _ranged_point.x, _ranged_point.y, 48, -1);
-			array_push(_sector.combat_sockets, _chaser_socket);
-			array_push(_sector.combat_sockets, _ranged_socket);
-			array_push(_sector.sockets, _chaser_socket);
-			array_push(_sector.sockets, _ranged_socket);
+
+		if (
+			_socket_tile.role == FPS_SECTOR_ROLE_COMBAT
+			|| _socket_tile.role == FPS_SECTOR_ROLE_FINALE
+		) {
+			fps_sector_add_enemy_sockets(_sector, _socket_tile);
 		}
 
 		if (_socket_tile.role == FPS_SECTOR_ROLE_FINALE) {

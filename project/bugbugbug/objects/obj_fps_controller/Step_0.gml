@@ -1,4 +1,6 @@
-weapon_cooldown = max(0, weapon_cooldown - 1);
+fps_weapon_tick(loadout);
+pickup_notice_frames = max(0, pickup_notice_frames - 1);
+pickup_spin = (pickup_spin + 3) mod 360;
 muzzle_flash_frames = max(0, muzzle_flash_frames - 1);
 hit_marker_frames = max(0, hit_marker_frames - 1);
 damage_flash_frames = max(0, damage_flash_frames - 1);
@@ -29,12 +31,28 @@ if (lore_open) {
 }
 
 if (keyboard_check_pressed(ord("E"))) {
-	var _near_lore = fps_sector_near_lore(sector, x, y, 72);
+	var _near_lore = fps_sector_near_lore(sector, x, y, FPS_WEAPON_PICKUP_RANGE);
 	if (_near_lore >= 0) {
 		lore_index = _near_lore;
 		lore_read[lore_index] = true;
 		lore_open = true;
 		set_mouse_capture(false);
+		exit;
+	}
+
+	var _near_pickup = fps_weapon_near_pickup(pickups, x, y, FPS_WEAPON_PICKUP_RANGE);
+	if (_near_pickup >= 0) {
+		var _pickup_result = fps_weapon_collect_pickup(
+			loadout,
+			pickups[_near_pickup],
+			current_health,
+			max_health
+		);
+		current_health = _pickup_result.health;
+		if (_pickup_result.consumed) {
+			pickups[_near_pickup].collected = true;
+		}
+		set_pickup_notice(_pickup_result.message);
 		exit;
 	}
 }
@@ -65,6 +83,35 @@ if (!window_mouse_get_locked()) {
 	window_mouse_set_locked(true);
 }
 
+var _switch_index = -1;
+if (keyboard_check_pressed(ord("1"))) _switch_index = FPS_WEAPON_PULSE;
+if (keyboard_check_pressed(ord("2"))) _switch_index = FPS_WEAPON_SCATTER;
+if (keyboard_check_pressed(ord("3"))) _switch_index = FPS_WEAPON_BURST;
+if (keyboard_check_pressed(ord("4"))) _switch_index = FPS_WEAPON_RAIL;
+if (_switch_index >= 0) {
+	if (fps_weapon_switch(loadout, _switch_index)) {
+		set_pickup_notice("EQUIPPED " + fps_weapon_current_definition(loadout).label);
+	} else {
+		set_pickup_notice("LOCKED — FIND WEAPON CACHE");
+	}
+}
+
+if (keyboard_check_pressed(ord("Q"))) {
+	fps_weapon_cycle(loadout, 1);
+	set_pickup_notice("EQUIPPED " + fps_weapon_current_definition(loadout).label);
+}
+
+if (keyboard_check_pressed(ord("R"))) {
+	var _reload_result = fps_weapon_reload(loadout);
+	if (_reload_result.reloaded) {
+		set_pickup_notice("RELOADED " + string(_reload_result.moved) + " ROUNDS");
+	} else if (_reload_result.reason == "FULL") {
+		set_pickup_notice("MAGAZINE FULL");
+	} else {
+		set_pickup_notice("NO RESERVE AMMO");
+	}
+}
+
 var _mouse_delta_x = clamp(window_mouse_get_delta_x(), -80, 80);
 var _mouse_delta_y = clamp(window_mouse_get_delta_y(), -80, 80);
 yaw = (yaw + _mouse_delta_x * mouse_sensitivity + 360) mod 360;
@@ -84,54 +131,14 @@ var _position = fps_sector_move_position(
 x = _position[0];
 y = _position[1];
 
-if (mouse_check_button_pressed(mb_left) && weapon_cooldown <= 0) {
-	weapon_cooldown = weapon_delay;
-	muzzle_flash_frames = 4;
-	recoil = 1;
-
-	var _horizontal_length = dcos(pitch);
-	var _direction_x = lengthdir_x(_horizontal_length, yaw);
-	var _direction_y = lengthdir_y(_horizontal_length, yaw);
-	var _direction_z = dsin(pitch);
-	var _nearest_enemy = noone;
-	var _nearest_hit_distance = weapon_range + 1;
-	var _enemy_count = instance_number(obj_fps_enemy);
-	for (var _enemy_index = 0; _enemy_index < _enemy_count; _enemy_index += 1) {
-		var _enemy = instance_find(obj_fps_enemy, _enemy_index);
-		if (
-			!instance_exists(_enemy)
-			|| !variable_instance_exists(_enemy, "initialized")
-			|| !_enemy.initialized
-			|| !_enemy.alive
-		) {
-			continue;
-		}
-		if (fps_sector_line_blocked(sector, x, y, _enemy.x, _enemy.y)) {
-			continue;
-		}
-
-		var _hit_distance = fps_ray_sphere_distance(
-			x,
-			y,
-			eye_height,
-			_direction_x,
-			_direction_y,
-			_direction_z,
-			_enemy.x,
-			_enemy.y,
-			_enemy.hit_sphere_height,
-			_enemy.hit_sphere_radius,
-			weapon_range
-		);
-
-		if (_hit_distance >= 0 && _hit_distance < _nearest_hit_distance) {
-			_nearest_enemy = _enemy;
-			_nearest_hit_distance = _hit_distance;
-		}
-	}
-
-	if (instance_exists(_nearest_enemy)) {
-		_nearest_enemy.take_damage(weapon_damage);
-		hit_marker_frames = 6;
+if (mouse_check_button_pressed(mb_left)) {
+	var _shot = fps_weapon_start_shot(loadout);
+	if (_shot.fired) {
+		loadout.cooldown_frames = _shot.cooldown_frames;
+		muzzle_flash_frames = 4;
+		recoil = 1;
+		fire_weapon_rays(_shot);
+	} else if (_shot.reason == "EMPTY") {
+		set_pickup_notice("EMPTY — PRESS R TO RELOAD");
 	}
 }

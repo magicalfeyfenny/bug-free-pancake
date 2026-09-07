@@ -34,10 +34,11 @@ lore_read = array_create(FPS_SECTOR_TILE_COUNT, false);
 lore_open = false;
 lore_index = -1;
 
-weapon_damage = 34;
-weapon_range = 1600;
-weapon_delay = 10;
-weapon_cooldown = 0;
+loadout = fps_weapon_create_loadout();
+pickups = fps_weapon_create_pickups(sector, sector_seed);
+pickup_notice = "PULSE RIFLE READY";
+pickup_notice_frames = 90;
+pickup_spin = 0;
 muzzle_flash_frames = 0;
 hit_marker_frames = 0;
 damage_flash_frames = 0;
@@ -94,6 +95,66 @@ take_damage = method(id, function(_amount) {
 	}
 });
 
+/// Keeps pickup and weapon state changes visible without consuming unavailable supplies.
+set_pickup_notice = method(id, function(_message) {
+	pickup_notice = _message;
+	pickup_notice_frames = 100;
+});
+
+/// Applies every acquired weapon's deterministic ray pattern to the shared enemy family.
+fire_weapon_rays = method(id, function(_shot) {
+	var _pattern_count = array_length(_shot.pattern);
+	for (var _pattern_index = 0; _pattern_index < _pattern_count; _pattern_index += 1) {
+		var _pattern = _shot.pattern[_pattern_index];
+		var _shot_pitch = clamp(pitch + _pattern.pitch_offset, -89, 89);
+		var _horizontal_length = dcos(_shot_pitch);
+		var _direction_x = lengthdir_x(_horizontal_length, yaw + _pattern.yaw_offset);
+		var _direction_y = lengthdir_y(_horizontal_length, yaw + _pattern.yaw_offset);
+		var _direction_z = dsin(_shot_pitch);
+		var _nearest_enemy = noone;
+		var _nearest_hit_distance = _shot.definition.range + 1;
+		var _enemy_count = instance_number(obj_fps_enemy);
+		for (var _enemy_index = 0; _enemy_index < _enemy_count; _enemy_index += 1) {
+			var _enemy = instance_find(obj_fps_enemy, _enemy_index);
+			if (
+				!instance_exists(_enemy)
+				|| !variable_instance_exists(_enemy, "initialized")
+				|| !_enemy.initialized
+				|| !_enemy.alive
+			) {
+				continue;
+			}
+			if (fps_sector_line_blocked(sector, x, y, _enemy.x, _enemy.y)) {
+				continue;
+			}
+
+			var _hit_distance = fps_ray_sphere_distance(
+				x,
+				y,
+				eye_height,
+				_direction_x,
+				_direction_y,
+				_direction_z,
+				_enemy.x,
+				_enemy.y,
+				_enemy.hit_sphere_height,
+				_enemy.hit_sphere_radius,
+				_shot.definition.range
+			);
+
+			if (_hit_distance >= 0 && _hit_distance < _nearest_hit_distance) {
+				_nearest_enemy = _enemy;
+				_nearest_hit_distance = _hit_distance;
+			}
+		}
+
+		if (instance_exists(_nearest_enemy)) {
+			_nearest_enemy.take_damage(_shot.damage);
+			hit_marker_frames = 6;
+		}
+	}
+});
+
 display_set_gui_size(room_width, room_height);
 window_set_caption("Containment Protocol");
 set_mouse_capture(true);
@@ -105,3 +166,7 @@ enemy_hit_buffer = fps_load_vertex_buffer("models/enemy_chaser_hit.vbuff", geome
 ranged_enemy_buffer = fps_load_vertex_buffer("models/enemy_skirmisher.vbuff", geometry_format);
 ranged_enemy_hit_buffer = fps_load_vertex_buffer("models/enemy_skirmisher_hit.vbuff", geometry_format);
 enemy_projectile_buffer = fps_build_unit_box_buffer(geometry_format, make_color_rgb(255, 190, 45));
+pickup_meshes = [];
+for (var _pickup_kind = 0; _pickup_kind < FPS_PICKUP_COUNT; _pickup_kind += 1) {
+	array_push(pickup_meshes, fps_build_unit_box_buffer(geometry_format, fps_weapon_pickup_colour(_pickup_kind)));
+}

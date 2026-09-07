@@ -335,7 +335,8 @@ function fps_sector_enemy_socket_is_available(_sector, _x, _y, _radius) {
 
 /// Adds deterministic enemy sockets to combat and finale tiles only.
 function fps_sector_add_enemy_sockets(_sector, _tile) {
-	var _socket_radius = 30;
+	// Reserve the largest roster footprint so every planned role starts clear.
+	var _socket_radius = 54;
 	var _candidates = [
 		[
 			[_tile.left + 72, _tile.center_y - 112],

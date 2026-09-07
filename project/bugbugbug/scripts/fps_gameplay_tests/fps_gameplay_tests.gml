@@ -241,7 +241,7 @@ suite(function() {
 			var _socket_count = array_length(_sector.sockets);
 			for (var _socket_index = 0; _socket_index < _socket_count; _socket_index += 1) {
 				var _socket = _sector.sockets[_socket_index];
-				expect(fps_sector_position_is_clear(_sector, _socket.x, _socket.y, _socket.radius)).toBeTruthy();
+				expect(fps_sector_position_is_clear(_sector, _socket.x, _socket.y, 54)).toBeTruthy();
 			}
 		});
 

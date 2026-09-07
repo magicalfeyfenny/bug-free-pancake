@@ -536,7 +536,8 @@ def historical_candidate_errors(baseline: Path, candidate: Path) -> list[str]:
             source = baseline if path.as_posix() == "PROJECT_POLICY.toml" else candidate
             target = snapshot / path
             target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(source / path, target)
+            # Keep tracked links intact, including directory and dangling links.
+            shutil.copy2(source / path, target, follow_symlinks=False)
         for command in (["git", "init", "--quiet"], ["git", "add", "--all", "--force"]):
             subprocess.run(command, cwd=snapshot, check=True, capture_output=True)
         return baseline_policy_errors(snapshot, checker_root=baseline)

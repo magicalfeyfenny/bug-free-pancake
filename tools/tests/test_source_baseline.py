@@ -5,10 +5,12 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from tools.ci.check_repo import (
     SourceLineViolation,
     collect_errors,
+    historical_candidate_errors,
     new_policy_errors,
 )
 
@@ -65,6 +67,31 @@ plain_runtime_svg = true
 
 
 class SourceBaselineTests(SourceBaselineFixture):
+    def test_historical_snapshot_preserves_tracked_symlink_targets(self):
+        links = {
+            "linked-directory": "source",
+            "linked-file": self.source,
+            "dangling-link": "missing-target",
+        }
+        for name, target in links.items():
+            (self.root / name).symlink_to(target)
+        self.track()
+
+        def inspect_snapshot(snapshot, checker_root):
+            """Historical checks must receive the candidate's original link topology."""
+            self.assertEqual(checker_root, self.root)
+            for name, target in links.items():
+                with self.subTest(name=name):
+                    path = snapshot / name
+                    self.assertTrue(path.is_symlink())
+                    self.assertEqual(path.readlink(), Path(target))
+            return []
+
+        with patch("tools.ci.check_repo.baseline_policy_errors", inspect_snapshot):
+            self.assertEqual(historical_candidate_errors(self.root, self.root), [])
+        for name, target in links.items():
+            self.assertEqual((self.root / name).readlink(), Path(target))
+
     def test_collection_exposes_source_identity_threshold_and_count(self):
         self.assertEqual(
             self.baseline,
@@ -281,6 +308,17 @@ class SourceBaselineCliTests(SourceBaselineFixture):
                 self.assertEqual(result.returncode, expected, result.stderr)
                 if expected:
                     self.assertIn(self.source, result.stderr)
+
+    def test_directory_symlink_preserves_historical_source_enforcement(self):
+        (self.root / "included-source").symlink_to("source", target_is_directory=True)
+        self.commit_baseline()
+        policy = self.root / "PROJECT_POLICY.toml"
+        policy.write_text(policy.read_text() + "\n# Policy contract edit\n")
+        result = self.run_checker()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.write_source(self.source, 4007)
+        self.assert_rejected(self.run_checker(), self.source)
+        self.assertEqual((self.root / "included-source").readlink(), Path("source"))
 
     def test_relaxed_policy_cannot_hide_growth_or_new_source(self):
         self.write_policy(5000)

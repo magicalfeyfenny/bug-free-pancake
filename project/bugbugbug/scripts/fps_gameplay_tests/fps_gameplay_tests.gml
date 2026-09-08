@@ -376,3 +376,130 @@ suite(function() {
 		});
 	});
 });
+
+suite(function() {
+	describe("Replayable run progression", function() {
+		it("transitions from a clean run through reward selection and room advance", function() {
+			var _state = fps_run_begin(12345);
+			expect(_state.phase).toBe(FPS_RUN_PLAYING);
+			expect(_state.room_index).toBe(0);
+			expect(_state.room_complete).toBeTruthy();
+
+			var _choices = [
+				{kind: FPS_RUN_REWARD_REPAIR, label: "REPAIR", description: ""},
+				{kind: FPS_RUN_REWARD_AMMO, label: "AMMO", description: ""},
+				{kind: FPS_RUN_REWARD_OVERCHARGE, label: "OVERCHARGE", description: ""},
+			];
+			_state.room_complete = false;
+			_state = fps_run_begin_reward(_state, _choices);
+			expect(_state.phase).toBe(FPS_RUN_REWARD);
+			expect(fps_run_select_reward(_state, 1)).toBeTruthy();
+			expect(_state.phase).toBe(FPS_RUN_PLAYING);
+			expect(_state.room_complete).toBeTruthy();
+			expect(_state.rooms_cleared).toBe(1);
+			_state = fps_run_advance_room(_state);
+			expect(_state.room_index).toBe(1);
+			expect(_state.room_complete).toBeFalsy();
+		});
+
+		it("replays room plans and reward choices from the same seed and profile", function() {
+			var _profile = fps_profile_defaults();
+			var _sector = fps_sector_generate(314159, 1366, 768, 24, 200);
+			var _combat_index = 0;
+			for (var _tile_index = 0; _tile_index < FPS_SECTOR_TILE_COUNT; _tile_index += 1) {
+				if (_sector.tiles[_tile_index].role == FPS_SECTOR_ROLE_COMBAT) {
+					_combat_index = _tile_index;
+				}
+			}
+			var _first_plan = fps_run_create_room_plan(_sector, 314159, _combat_index, 2);
+			var _repeat_plan = fps_run_create_room_plan(_sector, 314159, _combat_index, 2);
+			var _different_plan = fps_run_create_room_plan(_sector, 271828, _combat_index, 2);
+			expect(_first_plan.signature).toBe(_repeat_plan.signature);
+			expect(_first_plan.signature != _different_plan.signature).toBeTruthy();
+
+			var _first_choices = fps_run_create_reward_choices(314159, 2, _profile);
+			var _repeat_choices = fps_run_create_reward_choices(314159, 2, _profile);
+			expect(fps_run_reward_signature(_first_choices)).toBe(fps_run_reward_signature(_repeat_choices));
+			expect(array_length(_first_choices)).toBe(FPS_RUN_REWARD_LIMIT);
+		});
+
+		it("escalates the finale and reserves its durable threat", function() {
+			var _sector = fps_sector_generate(97531, 1366, 768, 24, 200);
+			var _pressure = fps_run_room_pressure(_sector, FPS_SECTOR_TILE_COUNT - 1, 97531);
+			var _plan = fps_run_create_room_plan(_sector, 97531, FPS_SECTOR_TILE_COUNT - 1, _pressure);
+			expect(_pressure).toBe(3);
+			expect(array_length(_plan.entries) > 0).toBeTruthy();
+			expect(_plan.entries[array_length(_plan.entries) - 1].kind).toBe(FPS_ENEMY_KIND_TITAN);
+		});
+
+		it("carries reward effects into the next encounter without sharing fresh-loadout state", function() {
+			var _loadout = fps_weapon_create_loadout();
+			var _profile = fps_profile_defaults();
+			var _repair = fps_run_apply_reward(
+				{kind: FPS_RUN_REWARD_REPAIR},
+				_loadout,
+				40,
+				100,
+				_profile
+			);
+			expect(_repair.health).toBe(75);
+			var _overcharge = fps_run_apply_reward(
+				{kind: FPS_RUN_REWARD_OVERCHARGE},
+				_loadout,
+				_repair.health,
+				_repair.max_health,
+				_profile
+			);
+			expect(_loadout.overcharge_frames).toBe(FPS_WEAPON_OVERCHARGE_GAIN);
+			expect(fps_weapon_owned_count(fps_weapon_create_loadout())).toBe(1);
+		});
+	});
+});
+
+suite(function() {
+	describe("Versioned persistent profile", function() {
+		it("round trips stable lore and unlock identities", function() {
+			var _profile = fps_profile_defaults();
+			_profile.runs = 4;
+			fps_profile_discover_lore(_profile, "archive-assignment");
+			fps_profile_grant_unlock(_profile, FPS_PROFILE_UNLOCK_RAIL);
+			var _round_trip = fps_profile_from_data(fps_profile_to_data(_profile));
+			expect(_round_trip.save_version).toBe(FPS_PROFILE_SAVE_VERSION);
+			expect(_round_trip.runs).toBe(4);
+			expect(_round_trip.discovered_lore[1]).toBeTruthy();
+			expect(fps_profile_has_unlock(_round_trip, FPS_PROFILE_UNLOCK_RAIL)).toBeTruthy();
+		});
+
+		it("falls back atomically for missing, corrupt, or unsupported data", function() {
+			var _missing = fps_profile_from_data(undefined);
+			expect(_missing.runs).toBe(0);
+			var _unsupported = fps_profile_defaults();
+			_unsupported.save_version = FPS_PROFILE_SAVE_VERSION + 1;
+			_unsupported.runs = 99;
+			var _unsupported_result = fps_profile_from_data(_unsupported);
+			expect(_unsupported_result.runs).toBe(0);
+			var _corrupt = {
+				save_version: FPS_PROFILE_SAVE_VERSION,
+				runs: "not-a-number",
+				victories: 0,
+				discovered_lore: [],
+				unlocks: [],
+			};
+			expect(fps_profile_data_is_valid(_corrupt)).toBeFalsy();
+			expect(fps_profile_reset_data().victories).toBe(0);
+		});
+
+		it("broadens future choices through bounded earned unlocks", function() {
+			var _profile = fps_profile_defaults();
+			_profile = fps_profile_record_run_finished(_profile, true);
+			expect(fps_profile_has_unlock(_profile, FPS_PROFILE_UNLOCK_RAIL)).toBeTruthy();
+			fps_profile_discover_lore(_profile, "archive-facility");
+			fps_profile_discover_lore(_profile, "archive-assignment");
+			fps_profile_discover_lore(_profile, "archive-breach");
+			_profile = fps_profile_record_run_finished(_profile, true);
+			expect(fps_profile_has_unlock(_profile, FPS_PROFILE_UNLOCK_ARCHIVE)).toBeTruthy();
+			expect(array_length(fps_run_reward_pool(_profile)) > 3).toBeTruthy();
+			expect(fps_profile_has_unlock(fps_profile_reset_data(), FPS_PROFILE_UNLOCK_RAIL)).toBeFalsy();
+		});
+	});
+});

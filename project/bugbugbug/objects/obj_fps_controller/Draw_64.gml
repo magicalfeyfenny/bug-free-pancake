@@ -232,6 +232,136 @@ if (lore_open && phase == FPS_STATE_PLAYING && lore_index >= 0) {
 	draw_text(_center_x, _gui_height - 174, "PRESS E TO CLOSE   •   ESC CLOSES WITHOUT CAPTURING MOUSE");
 }
 
+if (run_state == FPS_RUN_TITLE || run_state == FPS_RUN_RESET_CONFIRM) {
+	draw_set_alpha(0.92);
+	draw_set_color(make_color_rgb(3, 8, 15));
+	draw_rectangle(0, 0, _gui_width, _gui_height, false);
+	draw_set_alpha(1);
+	draw_set_halign(fa_center);
+	draw_set_valign(fa_top);
+	draw_set_color(make_color_rgb(102, 255, 225));
+	draw_text(_center_x, 92, "CONTAINMENT PROTOCOL");
+	draw_set_color(c_white);
+	draw_text(_center_x, 132, "A SEEDED CONTAINMENT ROGUELITE");
+	draw_set_color(make_color_rgb(184, 199, 216));
+	draw_text(_center_x, 184, "ENTER  BEGIN RUN");
+	draw_text(_center_x, 216, "N  RANDOM SEED     S  EDIT SEED     A  ARCHIVE");
+	draw_text(_center_x, 248, "X  RESET PROFILE");
+	draw_set_color(make_color_rgb(255, 226, 150));
+	draw_text(_center_x, 302, "SEED  " + seed_input + (seed_editing ? "_" : ""));
+	draw_set_color(c_white);
+	draw_text(_center_x, 350, "RUNS " + string(profile.runs) + "   VICTORIES " + string(profile.victories));
+	draw_text(_center_x, 382, "ARCHIVES " + string(fps_profile_discovered_lore_count(profile)) + " / " + string(FPS_PROFILE_LORE_COUNT));
+	draw_set_color(make_color_rgb(118, 224, 255));
+	draw_text(_center_x, 430, profile_status);
+	if (run_state == FPS_RUN_RESET_CONFIRM) {
+		draw_set_alpha(0.9);
+		draw_set_color(c_black);
+		draw_rectangle(_center_x - 300, 480, _center_x + 300, 590, false);
+		draw_set_alpha(1);
+		draw_set_color(make_color_rgb(255, 92, 105));
+		draw_text(_center_x, 500, "RESET PROFILE AND ERASE DISCOVERIES?");
+		draw_set_color(c_white);
+		draw_text(_center_x, 548, "ENTER CONFIRM   ESC CANCEL");
+	}
+}
+
+if (run_state == FPS_RUN_ARCHIVE) {
+	draw_set_alpha(0.94);
+	draw_set_color(make_color_rgb(3, 8, 15));
+	draw_rectangle(0, 0, _gui_width, _gui_height, false);
+	draw_set_alpha(1);
+	draw_set_halign(fa_center);
+	draw_set_valign(fa_top);
+	draw_set_color(make_color_rgb(102, 255, 225));
+	draw_text(_center_x, 86, "DISCOVERED ARCHIVE");
+	if (fps_profile_discovered_lore_count(profile) <= 0) {
+		draw_set_color(make_color_rgb(184, 199, 216));
+		draw_text(_center_x, 260, "NO ARCHIVES RECORDED");
+	} else {
+		var _archive_entry = lore_entries[archive_index];
+		if (profile.discovered_lore[archive_index]) {
+			draw_set_color(c_white);
+			draw_text(_center_x, 156, _archive_entry.title);
+			draw_set_color(make_color_rgb(211, 226, 240));
+			draw_text_ext(_center_x - 410, 236, _archive_entry.text, 8, 820);
+		} else {
+			draw_set_color(make_color_rgb(103, 118, 136));
+			draw_text(_center_x, 260, "ARCHIVE " + string(archive_index + 1) + " // LOCKED");
+		}
+	}
+	draw_set_color(make_color_rgb(184, 199, 216));
+	draw_set_valign(fa_bottom);
+	draw_text(_center_x, _gui_height - 96, "LEFT / RIGHT BROWSE   E OR ESC BACK");
+}
+
+if (run_state == FPS_RUN_REWARD) {
+	draw_set_alpha(0.9);
+	draw_set_color(make_color_rgb(3, 8, 15));
+	draw_rectangle(0, 0, _gui_width, _gui_height, false);
+	draw_set_alpha(1);
+	draw_set_halign(fa_center);
+	draw_set_valign(fa_top);
+	draw_set_color(make_color_rgb(102, 255, 225));
+	draw_text(_center_x, 96, "ROOM SECURED // CHOOSE AN ADVANTAGE");
+	draw_set_color(make_color_rgb(184, 199, 216));
+	draw_text(_center_x, 132, "Your choice is part of this seed's replayable run.");
+	var _choice_count = array_length(run_contract.reward_choices);
+	var _card_width = 260;
+	var _card_gap = 24;
+	var _cards_left = _center_x - (_choice_count * _card_width + (_choice_count - 1) * _card_gap) * 0.5;
+	for (var _choice_index = 0; _choice_index < _choice_count; _choice_index += 1) {
+		var _choice = run_contract.reward_choices[_choice_index];
+		var _card_left = _cards_left + _choice_index * (_card_width + _card_gap);
+		var _card_right = _card_left + _card_width;
+		draw_set_color(make_color_rgb(14, 29, 43));
+		draw_rectangle(_card_left, 220, _card_right, 430, false);
+		draw_set_color(make_color_rgb(102, 255, 225));
+		draw_rectangle(_card_left, 220, _card_right, 226, false);
+		draw_set_color(c_white);
+		draw_text(_card_left + _card_width * 0.5, 250, string(_choice_index + 1) + "  " + _choice.label);
+		draw_set_color(make_color_rgb(211, 226, 240));
+		draw_text_ext(_card_left + 24, 308, _choice.description, 8, _card_width - 48);
+	}
+	draw_set_color(make_color_rgb(255, 226, 150));
+	draw_set_valign(fa_bottom);
+	draw_text(_center_x, _gui_height - 96, "PRESS 1, 2, OR 3 TO COMMIT THE NEXT ROOM");
+}
+
+if (run_state == FPS_RUN_SUMMARY) {
+	draw_set_alpha(0.94);
+	draw_set_color(make_color_rgb(3, 8, 15));
+	draw_rectangle(0, 0, _gui_width, _gui_height, false);
+	draw_set_alpha(1);
+	draw_set_halign(fa_center);
+	draw_set_valign(fa_top);
+	draw_set_color(phase == FPS_STATE_VICTORY ? make_color_rgb(98, 255, 176) : make_color_rgb(255, 92, 105));
+	draw_text(_center_x, 112, phase == FPS_STATE_VICTORY ? "CONTAINMENT COMPLETE" : "CONTAINMENT FAILED");
+	draw_set_color(c_white);
+	draw_text(_center_x, 164, summary_reason);
+	draw_set_color(make_color_rgb(211, 226, 240));
+	draw_text(_center_x, 228, "SEED " + string(sector_seed) + "   ROOMS CLEARED " + string(run_contract.rooms_cleared));
+	draw_text(_center_x, 260, "ARCHIVES THIS RUN " + string(fps_profile_discovered_lore_count(profile)) + " / " + string(FPS_PROFILE_LORE_COUNT));
+	draw_set_color(make_color_rgb(184, 199, 216));
+	draw_text(_center_x, 344, "ENTER / R  RESTART SEED     N  TITLE WITH NEW SEED     A  ARCHIVE");
+}
+
+if (
+	run_state == FPS_RUN_PLAYING
+	&& room_complete
+	&& run_room_index < FPS_SECTOR_TILE_COUNT - 1
+	&& x >= sector.tiles[run_room_index].right - 100
+) {
+	draw_set_alpha(0.78);
+	draw_set_color(c_black);
+	draw_rectangle(_center_x - 260, _center_y + 120, _center_x + 260, _center_y + 164, false);
+	draw_set_alpha(1);
+	draw_set_color(make_color_rgb(255, 226, 150));
+	draw_set_halign(fa_center);
+	draw_set_valign(fa_middle);
+	draw_text(_center_x, _center_y + 142, "PRESS E TO ENTER " + sector.tiles[run_room_index + 1].role_name);
+}
+
 draw_set_alpha(1);
 draw_set_color(c_white);
 draw_set_halign(fa_left);

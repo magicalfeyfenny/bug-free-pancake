@@ -1,6 +1,7 @@
 var _initial_state = fps_create_encounter_state();
+profile = fps_profile_load();
 
-max_health = FPS_PLAYER_MAX_HEALTH;
+max_health = fps_profile_starting_max_health(profile);
 current_health = _initial_state.player_health;
 phase = _initial_state.phase;
 
@@ -10,15 +11,12 @@ eye_height = 68;
 yaw = 0;
 pitch = 0;
 mouse_sensitivity = 0.16;
-mouse_captured = true;
+mouse_captured = false;
 
 wall_height = 200;
 wall_thickness = 24;
 
-if (!variable_global_exists("fps_next_sector_seed")) {
-	global.fps_next_sector_seed = FPS_SECTOR_DEFAULT_SEED;
-}
-sector_seed = global.fps_next_sector_seed;
+sector_seed = fps_run_normalize_seed(FPS_SECTOR_DEFAULT_SEED);
 sector = fps_sector_generate(
 	sector_seed,
 	room_width,
@@ -34,11 +32,23 @@ lore_read = array_create(FPS_SECTOR_TILE_COUNT, false);
 lore_open = false;
 lore_index = -1;
 
+run_contract = fps_run_create_state(sector_seed);
+run_state = run_contract.phase;
+run_room_index = run_contract.room_index;
+seed_input = string(sector_seed);
+seed_editing = false;
+archive_index = 0;
+profile_reset_confirm = false;
+profile_status = "PROFILE READY";
+summary_reason = "";
+run_started = false;
+room_complete = false;
+
 loadout = fps_weapon_create_loadout();
 pickups = fps_weapon_create_pickups(sector, sector_seed);
-encounter_pressure = fps_enemy_encounter_pressure(sector_seed);
-encounter_plan = fps_enemy_create_encounter_plan(sector, sector_seed, encounter_pressure);
-pickup_notice = "PULSE RIFLE READY";
+encounter_pressure = 0;
+encounter_plan = {entries: [], signature: ""};
+pickup_notice = "PRESS ENTER TO BEGIN CONTAINMENT PROTOCOL";
 pickup_notice_frames = 90;
 pickup_spin = 0;
 muzzle_flash_frames = 0;
@@ -53,12 +63,194 @@ set_mouse_capture = method(id, function(_captured) {
 	window_set_cursor(_captured ? cr_none : cr_default);
 });
 
-/// Ends active play once and releases the pointer for the restart prompt.
+/// Copies the pure run contract into the controller fields used by input and HUD code.
+sync_run_contract = method(id, function() {
+	run_state = run_contract.phase;
+	run_room_index = run_contract.room_index;
+	room_complete = run_contract.room_complete;
+});
+
+/// Destroys only transient enemies and projectiles when a room or run changes.
+clear_room_instances = method(id, function() {
+	while (instance_number(obj_fps_enemy) > 0) {
+		var _enemy = instance_find(obj_fps_enemy, 0);
+		if (instance_exists(_enemy)) {
+			instance_destroy(_enemy);
+		}
+	}
+	while (instance_number(obj_fps_enemy_projectile) > 0) {
+		var _projectile = instance_find(obj_fps_enemy_projectile, 0);
+		if (instance_exists(_projectile)) {
+			instance_destroy(_projectile);
+		}
+	}
+});
+
+/// Creates only the encounter assigned to the current generated tile.
+spawn_room_encounter = method(id, function() {
+	var _tile = sector.tiles[run_room_index];
+	encounter_pressure = fps_run_room_pressure(sector, run_room_index, sector_seed);
+	encounter_plan = fps_run_create_room_plan(
+		sector,
+		sector_seed,
+		run_room_index,
+		encounter_pressure
+	);
+	var _entry_count = array_length(encounter_plan.entries);
+	for (var _entry_index = 0; _entry_index < _entry_count; _entry_index += 1) {
+		var _entry = encounter_plan.entries[_entry_index];
+		var _enemy = instance_create_layer(_entry.x, _entry.y, "Gameplay", obj_fps_enemy);
+		fps_enemy_apply_role(_enemy, _entry.kind);
+		_enemy.spawn_socket_id = _entry.socket_id;
+		_enemy.spawn_tile_index = _entry.tile_index;
+		_enemy.x = _entry.x;
+		_enemy.y = _entry.y;
+	}
+
+	if (_tile.role != FPS_SECTOR_ROLE_COMBAT && _tile.role != FPS_SECTOR_ROLE_FINALE) {
+		run_contract = fps_run_mark_room_complete(run_contract);
+		sync_run_contract();
+	} else if (_entry_count <= 0) {
+		run_contract = fps_run_mark_room_complete(run_contract);
+		sync_run_contract();
+	}
+});
+
+/// Starts a fresh deterministic run and clears every run-scoped object and value.
+start_run = method(id, function(_seed) {
+	clear_room_instances();
+	sector_seed = fps_run_normalize_seed(_seed);
+	run_contract = fps_run_begin(sector_seed);
+	sync_run_contract();
+	profile = fps_profile_record_run_started(profile);
+	fps_profile_save(profile);
+	max_health = fps_profile_starting_max_health(profile);
+	current_health = max_health;
+	phase = FPS_STATE_PLAYING;
+	sector = fps_sector_generate(
+		sector_seed,
+		room_width,
+		room_height,
+		wall_thickness,
+		wall_height
+	);
+	global.fps_sector = sector;
+	global.fps_next_sector_seed = fps_sector_next_seed(sector_seed);
+	x = sector.start_socket.x;
+	y = sector.start_socket.y;
+	lore_read = array_create(FPS_SECTOR_TILE_COUNT, false);
+	lore_open = false;
+	lore_index = -1;
+	loadout = fps_weapon_create_loadout();
+	pickups = fps_weapon_create_pickups(sector, sector_seed);
+	encounter_plan = {entries: [], signature: ""};
+	room_complete = true;
+	run_started = true;
+	summary_reason = "";
+	seed_input = string(sector_seed);
+	profile_status = "RUN IN PROGRESS";
+	set_mouse_capture(true);
+	vertex_delete_buffer(arena_buffer);
+	arena_buffer = fps_build_sector_buffer(geometry_format, sector);
+	spawn_room_encounter();
+	set_pickup_notice("SEED " + string(sector_seed) + " // CONTAINMENT PROTOCOL STARTED");
+});
+
+/// Moves the player into the next generated tile only after its current room is clear.
+advance_room = method(id, function() {
+	if (!room_complete || run_room_index >= FPS_SECTOR_TILE_COUNT - 1) {
+		return false;
+	}
+
+	clear_room_instances();
+	run_contract = fps_run_advance_room(run_contract);
+	sync_run_contract();
+	var _tile = sector.tiles[run_room_index];
+	x = _tile.left + 72;
+	y = _tile.center_y;
+	spawn_room_encounter();
+	set_mouse_capture(true);
+	set_pickup_notice("ENTERED " + _tile.role_name + " // ROOM " + string(run_room_index + 1));
+	return true;
+});
+
+/// Opens the profile-expanded reward cards after a non-finale combat room.
+begin_reward = method(id, function() {
+	if (run_state != FPS_RUN_PLAYING) {
+		return;
+	}
+
+	var _choices = fps_run_create_reward_choices(sector_seed, run_room_index, profile);
+	run_contract = fps_run_begin_reward(run_contract, _choices);
+	sync_run_contract();
+	set_mouse_capture(false);
+	set_pickup_notice("ROOM SECURED // CHOOSE YOUR NEXT ADVANTAGE");
+});
+
+/// Applies one reward card and restores valid input for the next room transition.
+choose_reward = method(id, function(_choice_index) {
+	if (run_state != FPS_RUN_REWARD || _choice_index < 0 || _choice_index >= array_length(run_contract.reward_choices)) {
+		return false;
+	}
+
+	var _choice = run_contract.reward_choices[_choice_index];
+	var _result = fps_run_apply_reward(_choice, loadout, current_health, max_health, profile);
+	current_health = _result.health;
+	max_health = _result.max_health;
+	fps_profile_save(profile);
+	run_contract = fps_run_select_reward(run_contract, _choice_index);
+	sync_run_contract();
+	set_mouse_capture(true);
+	set_pickup_notice(_result.message);
+	return true;
+});
+
+/// Ends a run exactly once and persists discoveries and victory unlocks.
 finish_encounter = method(id, function(_terminal_phase) {
-	if (phase == FPS_STATE_PLAYING) {
+	if (phase == FPS_STATE_PLAYING && run_state != FPS_RUN_SUMMARY) {
 		phase = _terminal_phase;
+		summary_reason = _terminal_phase == FPS_STATE_VICTORY
+			? "THE SIGNAL CORE IS SECURED"
+			: "CONTAINMENT FAILED BEFORE THE CORE"
+		;
+		run_contract = fps_run_finish(run_contract, _terminal_phase);
+		sync_run_contract();
+		profile = fps_profile_record_run_finished(profile, _terminal_phase == FPS_STATE_VICTORY);
+		fps_profile_save(profile);
 		set_mouse_capture(false);
 	}
+});
+
+/// Returns the title screen with the selected seed available for the next run.
+show_title = method(id, function(_seed) {
+	clear_room_instances();
+	phase = FPS_STATE_PLAYING;
+	seed_input = string(fps_run_normalize_seed(_seed));
+	run_contract = fps_run_create_state(real(seed_input));
+	sync_run_contract();
+	run_started = false;
+	profile_reset_confirm = false;
+	archive_index = 0;
+	set_mouse_capture(false);
+	profile_status = "PROFILE READY";
+});
+
+/// Appends one numeric seed digit while keeping input bounded and reproducible.
+append_seed_digit = method(id, function(_digit) {
+	if (string_length(seed_input) < 10) {
+		seed_input += string(_digit);
+	}
+});
+
+/// Refreshes archive progress after a newly discovered lore entry.
+mark_lore_read = method(id, function(_index) {
+	if (_index < 0 || _index >= array_length(lore_entries)) {
+		return;
+	}
+
+	lore_read[_index] = true;
+	fps_profile_discover_lore(profile, lore_entries[_index].id);
+	fps_profile_save(profile);
 });
 
 /// Counts living instances across the enemy object family, including child variants.
@@ -82,9 +274,19 @@ count_living_enemies = method(id, function() {
 
 /// Resolves death or victory from the player's health and every living enemy.
 refresh_terminal_phase = method(id, function() {
-	var _next_phase = fps_get_terminal_state(current_health, count_living_enemies());
-	if (_next_phase != FPS_STATE_PLAYING) {
-		finish_encounter(_next_phase);
+	if (current_health <= 0) {
+		finish_encounter(FPS_STATE_DEAD);
+		return;
+	}
+	if (run_state != FPS_RUN_PLAYING || count_living_enemies() > 0) {
+		return;
+	}
+
+	var _role = sector.tiles[run_room_index].role;
+	if (_role == FPS_SECTOR_ROLE_FINALE) {
+		finish_encounter(FPS_STATE_VICTORY);
+	} else if (_role == FPS_SECTOR_ROLE_COMBAT) {
+		begin_reward();
 	}
 });
 
@@ -159,7 +361,7 @@ fire_weapon_rays = method(id, function(_shot) {
 
 display_set_gui_size(room_width, room_height);
 window_set_caption("Containment Protocol");
-set_mouse_capture(true);
+set_mouse_capture(false);
 
 geometry_format = fps_create_vertex_format();
 arena_buffer = fps_build_sector_buffer(geometry_format, sector);
@@ -180,16 +382,4 @@ enemy_warning_buffer = fps_build_unit_box_buffer(geometry_format, make_color_rgb
 pickup_meshes = [];
 for (var _pickup_kind = 0; _pickup_kind < FPS_PICKUP_COUNT; _pickup_kind += 1) {
 	array_push(pickup_meshes, fps_build_unit_box_buffer(geometry_format, fps_weapon_pickup_colour(_pickup_kind)));
-}
-
-var _encounter_entry_count = array_length(encounter_plan.entries);
-for (var _encounter_entry_index = 0; _encounter_entry_index < _encounter_entry_count; _encounter_entry_index += 1) {
-	var _encounter_entry = encounter_plan.entries[_encounter_entry_index];
-	var _encounter_socket = sector.combat_sockets[_encounter_entry.socket_index];
-	var _enemy = instance_create_layer(_encounter_socket.x, _encounter_socket.y, "Gameplay", obj_fps_enemy);
-	fps_enemy_apply_role(_enemy, _encounter_entry.kind);
-	_enemy.spawn_socket_id = _encounter_entry.socket_id;
-	_enemy.spawn_tile_index = _encounter_entry.tile_index;
-	_enemy.x = _encounter_socket.x;
-	_enemy.y = _encounter_socket.y;
 }

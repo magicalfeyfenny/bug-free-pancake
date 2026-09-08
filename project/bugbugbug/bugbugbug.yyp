@@ -34,6 +34,8 @@
     {"id":{"name":"fps_sector_contract","path":"scripts/fps_sector_contract/fps_sector_contract.yy",},},
     {"id":{"name":"fps_lore_content","path":"scripts/fps_lore_content/fps_lore_content.yy",},},
     {"id":{"name":"fps_gameplay_state","path":"scripts/fps_gameplay_state/fps_gameplay_state.yy",},},
+    {"id":{"name":"fps_profile_data","path":"scripts/fps_profile_data/fps_profile_data.yy",},},
+    {"id":{"name":"fps_run_progression","path":"scripts/fps_run_progression/fps_run_progression.yy",},},
     {"id":{"name":"fps_weapon_system","path":"scripts/fps_weapon_system/fps_weapon_system.yy",},},
     {"id":{"name":"fps_render_geometry","path":"scripts/fps_render_geometry/fps_render_geometry.yy",},},
     {"id":{"name":"obj_fps_controller","path":"objects/obj_fps_controller/obj_fps_controller.yy",},},

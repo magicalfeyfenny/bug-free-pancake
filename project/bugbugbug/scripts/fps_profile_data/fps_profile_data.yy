@@ -1,0 +1,13 @@
+{
+  "$GMScript":"v1",
+  "%Name":"fps_profile_data",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"fps_profile_data",
+  "parent":{
+    "name":"Gameplay",
+    "path":"folders/Gameplay.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}

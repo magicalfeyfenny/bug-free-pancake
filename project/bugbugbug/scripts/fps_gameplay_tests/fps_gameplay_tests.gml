@@ -465,9 +465,17 @@ suite(function() {
 			fps_profile_grant_unlock(_profile, FPS_PROFILE_UNLOCK_RAIL);
 			var _round_trip = fps_profile_from_data(fps_profile_to_data(_profile));
 			expect(_round_trip.save_version).toBe(FPS_PROFILE_SAVE_VERSION);
-			expect(_round_trip.runs).toBe(4);
+		expect(_round_trip.runs).toBe(4);
 			expect(_round_trip.discovered_lore[1]).toBeTruthy();
 			expect(fps_profile_has_unlock(_round_trip, FPS_PROFILE_UNLOCK_RAIL)).toBeTruthy();
+
+			var _test_file = "containment_protocol_profile_contract_test.ini";
+			fps_profile_save_file(_profile, _test_file);
+			var _file_round_trip = fps_profile_load_file(_test_file);
+			fps_profile_reset_file_as(_test_file);
+			expect(_file_round_trip.runs).toBe(4);
+			expect(fps_profile_has_unlock(_file_round_trip, FPS_PROFILE_UNLOCK_RAIL)).toBeTruthy();
+			expect(file_exists(_test_file)).toBeFalsy();
 		});
 
 		it("falls back atomically for missing, corrupt, or unsupported data", function() {

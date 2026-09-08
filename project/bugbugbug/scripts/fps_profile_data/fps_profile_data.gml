@@ -195,10 +195,10 @@ function fps_profile_starting_max_health(_profile) {
 	return FPS_PLAYER_MAX_HEALTH + (fps_profile_has_unlock(_profile, FPS_PROFILE_UNLOCK_VITALS) ? 15 : 0);
 }
 
-/// Writes one stable versioned profile and closes the INI before returning.
-function fps_profile_save(_profile) {
+/// Writes one stable versioned profile to a named INI and closes it before returning.
+function fps_profile_save_file(_profile, _filename) {
 	var _data = fps_profile_to_data(_profile);
-	ini_open(FPS_PROFILE_SAVE_FILE);
+	ini_open(_filename);
 	ini_write_real("meta", "version", _data.save_version);
 	ini_write_real("meta", "runs", _data.runs);
 	ini_write_real("meta", "victories", _data.victories);
@@ -214,13 +214,13 @@ function fps_profile_save(_profile) {
 	return true;
 }
 
-/// Loads the profile or returns documented defaults for absent or unsupported data.
-function fps_profile_load() {
-	if (!file_exists(FPS_PROFILE_SAVE_FILE)) {
+/// Loads a named profile or returns documented defaults for absent or unsupported data.
+function fps_profile_load_file(_filename) {
+	if (!file_exists(_filename)) {
 		return fps_profile_defaults();
 	}
 
-	ini_open(FPS_PROFILE_SAVE_FILE);
+	ini_open(_filename);
 	var _data = {
 		save_version: ini_read_real("meta", "version", -1),
 		runs: ini_read_real("meta", "runs", 0),
@@ -240,16 +240,31 @@ function fps_profile_load() {
 	return fps_profile_from_data(_data);
 }
 
+/// Writes the player profile to its one stable local save file.
+function fps_profile_save(_profile) {
+	return fps_profile_save_file(_profile, FPS_PROFILE_SAVE_FILE);
+}
+
+/// Loads the player profile from its one stable local save file.
+function fps_profile_load() {
+	return fps_profile_load_file(FPS_PROFILE_SAVE_FILE);
+}
+
 /// Creates the clean profile used by explicit reset and recovery paths.
 function fps_profile_reset_data() {
 	return fps_profile_defaults();
 }
 
-/// Deletes the one profile file and returns a clean in-memory profile.
-function fps_profile_reset_file() {
-	if (file_exists(FPS_PROFILE_SAVE_FILE)) {
-		file_delete(FPS_PROFILE_SAVE_FILE);
+/// Deletes a named profile file and returns a clean in-memory profile.
+function fps_profile_reset_file_as(_filename) {
+	if (file_exists(_filename)) {
+		file_delete(_filename);
 	}
 
 	return fps_profile_reset_data();
+}
+
+/// Deletes the one profile file and returns a clean in-memory profile.
+function fps_profile_reset_file() {
+	return fps_profile_reset_file_as(FPS_PROFILE_SAVE_FILE);
 }

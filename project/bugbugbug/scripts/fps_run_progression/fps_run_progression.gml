@@ -80,7 +80,11 @@ function fps_run_begin_reward(_state, _choices) {
 
 /// Applies a selected reward and returns the run to a traversable state.
 function fps_run_select_reward(_state, _choice_index) {
-	if (_choice_index < 0 || _choice_index >= array_length(_state.reward_choices)) {
+	if (
+		_state.phase != FPS_RUN_REWARD
+		|| _choice_index < 0
+		|| _choice_index >= array_length(_state.reward_choices)
+	) {
 		return false;
 	}
 

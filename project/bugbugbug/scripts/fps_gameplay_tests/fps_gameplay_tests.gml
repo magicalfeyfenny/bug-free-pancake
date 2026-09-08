@@ -400,6 +400,13 @@ suite(function() {
 			_state = fps_run_advance_room(_state);
 			expect(_state.room_index).toBe(1);
 			expect(_state.room_complete).toBeFalsy();
+			_state = fps_run_finish(_state, FPS_STATE_VICTORY);
+			expect(_state.phase).toBe(FPS_RUN_SUMMARY);
+			expect(_state.terminal_phase).toBe(FPS_STATE_VICTORY);
+			var _restart = fps_run_begin(_state.seed);
+			expect(_restart.phase).toBe(FPS_RUN_PLAYING);
+			expect(_restart.room_index).toBe(0);
+			expect(_restart.rooms_cleared).toBe(0);
 		});
 
 		it("replays room plans and reward choices from the same seed and profile", function() {

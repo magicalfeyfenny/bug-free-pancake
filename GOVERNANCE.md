@@ -18,7 +18,7 @@ Except for a critical stop that must be exposed before mutation, entrypoints
 link here instead of restating shared rules. A repeated stop is a safety
 reminder, not a second source of authority.
 
-### Inventory authority
+## Inventory authority
 
 Volatile test, asset, capture, resource, label, and similar inventory totals
 must not be duplicated as normative prose unless every normative copy is
@@ -31,6 +31,37 @@ This rule does not remove true numeric contracts such as configured limits,
 fixed identifiers, or protocol requirements. Dated historical evidence and
 non-normative reports may record observed totals; those measurements do not
 become ongoing inventory requirements.
+
+## Policy updates
+
+An adoption/update PR taking a newer upstream policy revision records the
+upstream repository, the previously adopted and newly selected immutable
+commit IDs, and the prior adoption evidence supporting the old revision.
+If the old revision is uncertain, identify that gap and resolve the bounded
+comparison basis from available adoption evidence before claiming the update
+complete; do not infer adoption from textual similarity.
+
+Bound the update to the changed upstream policy and the repository-owned
+consumers that actually encode it. Record the affected instruction, routing,
+enforcement, and validation surfaces, why each is affected, its disposition,
+and the evidence for the resulting behavior. Apply required consumer changes
+atomically in the same adoption PR, including consumers with different local
+paths or wording; record evidence for consumers that already satisfy the rule.
+A filename diff alone does not establish the affected set.
+
+Identify intentionally preserved project-specific differences and the
+independent project authority supporting them. Neither historical template
+state nor an older local implementation establishes a preservation obligation;
+apply [Compatibility obligations](#compatibility-obligations) where relevant.
+Unrelated project/template differences remain outside the update scope. When
+the changed policy has no affected downstream consumer, record the examined
+boundary and supporting evidence without manufacturing changes or follow-ups.
+
+The adoption PR is the update record. Reuse its existing evidence and the
+[bounded policy-update procedure](docs/POLICY_UPDATE.md); do not require a
+separate migration registry, policy snapshot, synchronization service, or
+standing cleanup backlog. This route uses the existing issue, validation, and
+risk lifecycle and grants no additional mutation or merge authority.
 
 ## Issue authority
 
@@ -102,6 +133,10 @@ separately.
 Create the minimum issue set needed for the requested outcome. Do not
 pre-expand speculative downstream work into a backlog.
 
+Deferred work is not automatically backlog work. Create a follow-up issue
+only for an explicit requested outcome, a concrete defect/risk that should be
+tracked, or a blocker that cannot remain in the current issue.
+
 A direct human request for governed repository work authorizes the
 `governed-change` workflow to find or create only the atomic implementation
 issue or linked atomic issue set needed for exactly that requested work. A
@@ -117,7 +152,7 @@ including scheduled audits. Its skill owns the audit-specific evidence and
 per-run constraints. In scheduled operation, Project Steward owns issue
 creation and does not implement issues.
 
-### Compatibility obligations
+## Compatibility obligations
 
 Compatibility is required only when an independently established contract or
 consumer must continue to accept an older representation.
@@ -171,7 +206,7 @@ independent consumer or durable contract that requires it and cite the
 available source evidence. Do not add conditional requirements such as
 "preserve a compatibility alias if needed" without that evidence.
 
-### Scheduled claim eligibility
+## Scheduled claim eligibility
 
 The scheduled Governed Change automation owns selection and claim decisions
 for existing implementation issues. Project Steward continues to own audit,
@@ -209,7 +244,7 @@ condition, including issue atomicity, risk handling, dependency order, and the
 fail-closed recheck immediately before repository mutation. It does not replace
 or relax any of them.
 
-### Placeholder-backed mixed work
+## Placeholder-backed mixed work
 
 A mixed implementation issue may use deterministic placeholders when final
 authored assets are secondary and the current execution environment
@@ -255,7 +290,7 @@ general backlog. A scheduled execution may create it only after claiming that
 issue and only under the rules above. The follow-up uses the normal
 issue-authority, dependency, and risk rules for its own scope.
 
-### Scheduled continuation
+## Scheduled continuation
 
 Before selecting a new issue, a scheduled Governed Change run checks for an
 existing incomplete governed change owned by the current automation user. A
@@ -417,7 +452,7 @@ combine their scopes.
 Keep the change bounded to that issue and do not absorb unrelated cleanup.
 Preserve useful behavior, not obsolete architecture merely because it exists.
 
-### Contract-oriented validation
+## Contract-oriented validation
 
 Tests and automated policy checks should validate required behavior, structure,
 and repository contracts rather than incidental wording or representation.
@@ -438,7 +473,7 @@ A wording, formatting, ordering, or representation change that preserves the
 intended contract should not require unrelated test changes merely to satisfy
 stale textual expectations.
 
-### Validation coverage allocation
+## Validation coverage allocation
 
 Prefer automated validation whenever the required property is
 machine-verifiable.
@@ -478,7 +513,39 @@ Interactive execution is appropriate only when it has a concrete
 machine-verifiable purpose that cannot be established adequately through
 ordinary static or automated evidence.
 
-### Interactive runtime validation
+## Policy correction boundary evidence
+
+For an interpretive governance correction motivated by an observed failure,
+include in the existing issue or PR validation/review evidence the original
+prohibited scenario and, when a meaningful neighboring case exists, at least
+one legitimate case that must remain allowed. Explain the policy boundary
+that distinguishes their decisions; an arbitrary happy-path example is not
+enough. Prefer the actual failure and real permitted behavior when available.
+
+Use executable semantic fixtures where the policy is mechanically enforceable
+and such fixtures are practical. For non-mechanical interpretation, a bounded
+scenario decision in the existing issue or PR evidence is sufficient. Identify
+the relevant facts, allowed or prohibited outcome, and governing authority
+without inventing a prose parser or asserting exact policy wording.
+
+Purely mechanical changes, wording-only routing fixes, and rules with no
+meaningful neighboring exception do not require an artificial counterexample.
+This is not a universal two-fixture CI gate, policy-case registry, mandatory
+manual review script, or retrospective requirement to rewrite historical PRs.
+Use the existing validation and risk lifecycle; this rule adds no human or
+delegated review requirement.
+
+A scenario cannot create a compatibility, cleanup, asset-production, or other
+obligation. Any obligation used to justify the permitted case must already
+have independent evidence under the applicable authority, such as
+[Compatibility obligations](#compatibility-obligations) or
+[Placeholder-backed mixed work](#placeholder-backed-mixed-work).
+
+Routing tests establish only routing and authority reachability. They do not
+prove future agent obedience or interpretation; keep those claims separate
+from the scenario decisions above.
+
+## Interactive runtime validation
 
 Launching the game is exceptional validation, not a default completion stage.
 
@@ -540,6 +607,13 @@ requires affected Stage 1 checks again and, if Stage 2 had already passed, the
 complete Stage 2 suite on the new candidate. Do not repeat Stage 2 while the
 candidate tree remains unchanged.
 
+Before collecting this evidence, re-fetch and reconcile the current governing
+issue, including resumed or previously superseded work. Record the accepted
+issue revision with the evidence under
+[Issue contract evidence](#issue-contract-evidence). Re-fetch it immediately
+before adding completion metadata; an intervening contract change requires
+reconciliation and fresh evidence for the revised contract.
+
 ### Stage 3: hosted PR evidence
 
 After the final head, body, and labels are in place, all required checks under
@@ -549,6 +623,11 @@ Missing, failed, invalid, or stale evidence does not satisfy this stage.
 A head change invalidates Stage 3. Changing only the PR body or labels leaves
 local evidence valid but invalidates Stage 3, so obtain fresh hosted evidence
 without rerunning the local suite.
+
+A changed governing issue contract also invalidates completion evidence, even
+when PR metadata and the candidate tree are unchanged. Follow
+[Issue contract evidence](#issue-contract-evidence) to refresh the accepted
+revision and obtain fresh hosted evidence.
 
 Human review, merge, promotion, and publication gates allocate authority; they
 do not create additional human observation or experiential verification work.
@@ -676,8 +755,47 @@ required by the applicable path below. The issue number must match the branch.
 Use exactly one completion label; `work:complete` and `work:review-ready` must
 not coexist. Do not add completion metadata to an intermediate milestone.
 
+Include the accepted revision marker from
+[Issue contract evidence](#issue-contract-evidence) in the existing PR body.
+
 Obtain Stage 3 hosted PR evidence for the final head and completion metadata
 before automation or final handoff.
+
+### Issue contract evidence
+
+The contract revision binds the governing issue's repository, immutable node
+identity, and number to its title, full body, open/closed state, `work:blocked`
+label state, and the identities of unresolved native `blockedBy` issues. The
+title and body contain the authorized outcome, scope, acceptance, engineering
+constraints, and validation. The structured state records whether work is open
+and blocked. Do not derive authority from arbitrary comments or surrounding
+conversation; comments, reactions, activity timestamps, unrelated labels, and
+closed blockers' text are outside this snapshot.
+
+Use the [issue contract command](docs/CI.md#issue-contract-attestation) to read
+the issue and generate its SHA-256 revision. Preserve that revision with the
+Stage 2 evidence, then add its `issue-contract:v1` marker to the existing PR
+body when the completion transition is valid. CI re-fetches the issue, requires
+the marker to match, and records the revision in the existing PR metadata
+artifact. A closed issue, unresolved native blocker, or `work:blocked` issue
+cannot pass completion merely by refreshing its digest. Missing or incomplete
+issue evidence fails closed. Human-created changes retain their exemption.
+
+A revision is a conservative snapshot identity, not a claim that Markdown
+formatting is a semantic product requirement. A harmless title or body edit can
+require fresh attestation. Human authority may intentionally revise the issue:
+reconcile the current authorized contract, establish fresh evidence for that
+revision, replace the marker, and obtain fresh CI. Reuse unchanged mechanical
+test results only when they still establish the current requirements; record
+that reconciliation with the existing validation evidence. A changed candidate
+tree still requires the full Stage 2 suite. A changed issue alone grants no
+broader implementation, cleanup, or merge authority.
+
+Before a manual completion handoff or merge, compare the hosted artifact with
+fresh PR and issue reads. Low-risk automation performs this comparison in each
+existing eligibility window and again after marking a draft ready. These are
+point-in-time checks: GitHub's final merge call cannot atomically bind an issue
+revision. This procedure adds no continuous issue monitor or version registry.
 
 ## Low-risk changes
 

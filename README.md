@@ -31,8 +31,9 @@ resolved.
 
 Validation happens in three stages: focused checks support each milestone,
 the complete change receives whole-issue local validation, and hosted CI then
-verifies the exact pull-request head, body, and labels. Completion metadata is
-added only after the whole change is locally valid.
+verifies the exact pull-request head, body, labels, and accepted governing
+issue revision. Completion metadata is added only after the whole change is
+locally valid under that current issue contract.
 
 Risk determines the final path. Eligible completed low-risk work targeting
 `dev` can be marked ready and squash-merged by repository automation after its

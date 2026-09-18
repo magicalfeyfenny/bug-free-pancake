@@ -13,6 +13,11 @@
 #macro FPS_ENEMY_KIND_TITAN 4
 #macro FPS_ENEMY_KIND_COUNT 5
 
+#macro FPS_ENEMY_PHASE_NONE -1
+#macro FPS_TITAN_PHASE_AWAKENING 0
+#macro FPS_TITAN_PHASE_SIEGE 1
+#macro FPS_TITAN_PHASE_TWO_THRESHOLD 180
+
 #macro FPS_ENEMY_WARNING_AREA 0
 #macro FPS_ENEMY_WARNING_BEAM 1
 
@@ -262,6 +267,8 @@ function fps_enemy_role_definition(_kind) {
 			return {
 				identity: "titan",
 				label: "TITAN",
+				phase_name: "AWAKENING",
+				phase_threshold: FPS_TITAN_PHASE_TWO_THRESHOLD,
 				max_health: 360,
 				move_speed: 1.15,
 				stop_distance: 190,
@@ -279,6 +286,17 @@ function fps_enemy_role_definition(_kind) {
 				telegraph_frames: 52,
 				projectile_speed: 0,
 				projectile_lifetime: 0,
+				phase_two: {
+					name: "SIEGE",
+					move_speed: 1.65,
+					stop_distance: 210,
+					attack_range: 320,
+					attack_damage: 40,
+					attack_delay: 88,
+					warning_radius: 224,
+					warning_shape: FPS_ENEMY_WARNING_AREA,
+					telegraph_frames: 44,
+				},
 			};
 	}
 
@@ -316,10 +334,60 @@ function fps_enemy_apply_role(_enemy, _kind) {
 	_enemy.telegraph_max_frames = _definition.telegraph_frames;
 	_enemy.projectile_speed = _definition.projectile_speed;
 	_enemy.projectile_lifetime = _definition.projectile_lifetime;
+	_enemy.combat_phase = variable_struct_exists(_definition, "phase_name")
+		? FPS_TITAN_PHASE_AWAKENING
+		: FPS_ENEMY_PHASE_NONE;
+	_enemy.combat_phase_name = variable_struct_exists(_definition, "phase_name")
+		? _definition.phase_name
+		: "";
+	_enemy.phase_threshold = variable_struct_exists(_definition, "phase_threshold")
+		? _definition.phase_threshold
+		: -1;
 	_enemy.mode = FPS_RANGED_MODE_EVADE;
 	_enemy.mode_frames = 90;
 	_enemy.strafe_direction = 1;
 	_enemy.initialized = true;
+}
+
+/// Applies the Titan's second role phase without changing its identity or collision contract.
+function fps_enemy_apply_combat_phase(_enemy, _phase) {
+	if (
+		!instance_exists(_enemy)
+		|| _enemy.enemy_kind != FPS_ENEMY_KIND_TITAN
+		|| _phase != FPS_TITAN_PHASE_SIEGE
+		|| _enemy.combat_phase == FPS_TITAN_PHASE_SIEGE
+	) {
+		return false;
+	}
+
+	var _phase_definition = fps_enemy_role_definition(FPS_ENEMY_KIND_TITAN).phase_two;
+	_enemy.combat_phase = FPS_TITAN_PHASE_SIEGE;
+	_enemy.combat_phase_name = _phase_definition.name;
+	_enemy.move_speed = _phase_definition.move_speed;
+	_enemy.stop_distance = _phase_definition.stop_distance;
+	_enemy.attack_range = _phase_definition.attack_range;
+	_enemy.attack_damage = _phase_definition.attack_damage;
+	_enemy.attack_delay = _phase_definition.attack_delay;
+	_enemy.warning_radius = _phase_definition.warning_radius;
+	_enemy.warning_shape = _phase_definition.warning_shape;
+	_enemy.telegraph_max_frames = _phase_definition.telegraph_frames;
+	return true;
+}
+
+/// Advances a living Titan once when damage reaches its deterministic phase threshold.
+function fps_enemy_update_phase(_enemy) {
+	if (
+		!instance_exists(_enemy)
+		|| !_enemy.alive
+		|| _enemy.enemy_kind != FPS_ENEMY_KIND_TITAN
+		|| _enemy.combat_phase != FPS_TITAN_PHASE_AWAKENING
+		|| _enemy.current_health <= 0
+		|| _enemy.current_health > _enemy.phase_threshold
+	) {
+		return false;
+	}
+
+	return fps_enemy_apply_combat_phase(_enemy, FPS_TITAN_PHASE_SIEGE);
 }
 
 /// Derives a repeatable pressure tier from a supplied encounter seed.
@@ -591,7 +659,12 @@ function fps_enemy_step_titan(_enemy, _player) {
 		&& _enemy.attack_cooldown <= 0
 		&& !fps_sector_line_blocked(_player.sector, _enemy.x, _enemy.y, _player.x, _player.y)
 	) {
-		fps_enemy_begin_telegraph(_enemy, 52, 188, FPS_ENEMY_WARNING_AREA);
+		fps_enemy_begin_telegraph(
+			_enemy,
+			_enemy.telegraph_max_frames,
+			_enemy.warning_radius,
+			_enemy.warning_shape
+		);
 	}
 }
 

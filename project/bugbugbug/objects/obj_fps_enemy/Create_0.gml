@@ -17,6 +17,13 @@ take_damage = method(id, function(_amount) {
 	if (alive) {
 		current_health = fps_apply_damage(current_health, _amount);
 		hit_flash_frames = 5;
+		var _phase_changed = current_health > 0 && fps_enemy_update_phase(id);
+		if (_phase_changed) {
+			var _phase_player = instance_find(obj_fps_controller, 0);
+			if (instance_exists(_phase_player)) {
+				_phase_player.set_pickup_notice("TITAN PHASE SHIFT // " + combat_phase_name);
+			}
+		}
 
 		if (current_health <= 0) {
 			alive = false;

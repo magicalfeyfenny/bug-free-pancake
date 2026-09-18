@@ -144,6 +144,12 @@ for (var _enemy_index = 0; _enemy_index < _enemy_count; _enemy_index += 1) {
 	var _label_y = 34 + _enemy_row * 44;
 	var _bar_y = 53 + _enemy_row * 44;
 	var _hostile_name = _enemy.enemy_label;
+	if (
+		variable_instance_exists(_enemy, "combat_phase_name")
+		&& string_length(_enemy.combat_phase_name) > 0
+	) {
+		_hostile_name += " // " + _enemy.combat_phase_name;
+	}
 	var _health_colour = _enemy.health_colour;
 
 	draw_set_halign(fa_right);

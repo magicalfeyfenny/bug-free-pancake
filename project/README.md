@@ -40,4 +40,6 @@ The Pulse Rifle, Scatter Cannon, Burst Carbine, and Rail Lance trade firing
 pattern, reach, cadence, and ammunition differently. Six optional archive
 entries explain the facility, assignment, breach, hostiles, shifting sectors,
 and signal core. Clear the mixed encounters and durable finale threat to
-secure the run.
+secure the run. The finale Titan begins in the named AWAKENING phase and
+shifts once to SIEGE at half health; the combat notice announces the shift
+while the existing warning, line-of-sight, and collision rules remain active.

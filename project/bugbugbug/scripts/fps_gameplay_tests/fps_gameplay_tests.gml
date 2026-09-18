@@ -410,6 +410,44 @@ suite(function() {
 			expect(_sentry.warning_shape).toBe(FPS_ENEMY_WARNING_BEAM);
 			expect(_titan.max_health > FPS_ENEMY_MAX_HEALTH * 3).toBeTruthy();
 			expect(_titan.telegraph_frames > _burrower.telegraph_frames).toBeTruthy();
+			expect(_titan.phase_name).toBe("AWAKENING");
+			expect(_titan.phase_threshold).toBe(FPS_TITAN_PHASE_TWO_THRESHOLD);
+			expect(_titan.phase_two.name).toBe("SIEGE");
+			expect(_titan.phase_two.move_speed > _titan.move_speed).toBeTruthy();
+			expect(_titan.phase_two.attack_damage > _titan.attack_damage).toBeTruthy();
+			expect(_titan.phase_two.telegraph_frames < _titan.telegraph_frames).toBeTruthy();
+		});
+		it("changes Titan phase once at its threshold and resets through the role contract", function() {
+			var _controller = instance_find(obj_fps_controller, 0);
+			var _previous_notice = _controller.pickup_notice;
+			var _titan = create(0, 0, obj_fps_enemy);
+			fps_enemy_apply_role(_titan, FPS_ENEMY_KIND_TITAN);
+
+			expect(_titan.combat_phase).toBe(FPS_TITAN_PHASE_AWAKENING);
+			_titan.take_damage(_titan.max_health - _titan.phase_threshold - 1);
+			expect(_titan.current_health).toBe(_titan.phase_threshold + 1);
+
+			_titan.take_damage(1);
+			expect(_titan.combat_phase).toBe(FPS_TITAN_PHASE_SIEGE);
+			expect(_titan.move_speed).toBe(fps_enemy_role_definition(FPS_ENEMY_KIND_TITAN).phase_two.move_speed);
+			expect(_titan.collision_radius).toBe(fps_enemy_role_definition(FPS_ENEMY_KIND_TITAN).collision_radius);
+			expect(_controller.pickup_notice).toBe("TITAN PHASE SHIFT // SIEGE");
+			expect(fps_enemy_update_phase(_titan)).toBeFalsy();
+
+			fps_enemy_apply_role(_titan, FPS_ENEMY_KIND_TITAN);
+			expect(_titan.combat_phase).toBe(FPS_TITAN_PHASE_AWAKENING);
+			expect(_titan.current_health).toBe(_titan.max_health);
+
+			_controller.pickup_notice = _previous_notice;
+			instance_destroy(_titan);
+		});
+
+		it("keeps phase changes isolated from non-Titan roles", function() {
+			var _enemy = create(0, 0, obj_fps_enemy);
+			fps_enemy_apply_role(_enemy, FPS_ENEMY_KIND_CHASER);
+			_enemy.take_damage(1);
+			expect(_enemy.combat_phase).toBe(FPS_ENEMY_PHASE_NONE);
+			instance_destroy(_enemy);
 		});
 
 		it("replays mixed compositions from seed and pressure", function() {
@@ -581,6 +619,8 @@ suite(function() {
 			expect(_pressure).toBe(3);
 			expect(array_length(_plan.entries) > 0).toBeTruthy();
 			expect(_plan.entries[array_length(_plan.entries) - 1].kind).toBe(FPS_ENEMY_KIND_TITAN);
+			var _terminal = fps_run_finish(fps_run_begin(97531), FPS_STATE_VICTORY);
+			expect(_terminal.phase).toBe(FPS_RUN_SUMMARY);
 		});
 
 		it("carries reward effects into the next encounter without sharing fresh-loadout state", function() {

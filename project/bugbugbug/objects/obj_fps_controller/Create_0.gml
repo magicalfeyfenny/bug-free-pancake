@@ -10,7 +10,8 @@ collision_radius = 22;
 eye_height = 68;
 yaw = 0;
 pitch = 0;
-mouse_sensitivity = 0.16;
+mouse_sensitivity = fps_profile_normalize_mouse_sensitivity(profile.mouse_sensitivity);
+invert_vertical_look = fps_profile_normalize_invert_vertical_look(profile.invert_vertical_look);
 mouse_captured = false;
 
 wall_height = 200;
@@ -39,6 +40,7 @@ run_room_index = run_contract.room_index;
 seed_input = string(sector_seed);
 seed_editing = false;
 archive_index = 0;
+settings_index = 0;
 profile_reset_confirm = false;
 profile_status = "PROFILE READY";
 summary_reason = "";
@@ -71,6 +73,45 @@ sync_run_contract = method(id, function() {
 	run_room_index = run_contract.room_index;
 	room_complete = run_contract.room_complete;
 	global.fps_run_paused = run_state == FPS_RUN_PAUSED;
+});
+
+/// Copies validated profile aim settings into the fields used by the next input frame.
+apply_profile_settings = method(id, function() {
+	mouse_sensitivity = fps_profile_normalize_mouse_sensitivity(profile.mouse_sensitivity);
+	invert_vertical_look = fps_profile_normalize_invert_vertical_look(profile.invert_vertical_look);
+	profile.mouse_sensitivity = mouse_sensitivity;
+	profile.invert_vertical_look = invert_vertical_look;
+});
+
+/// Opens the title-owned controls screen without capturing the desktop pointer.
+open_settings = method(id, function() {
+	seed_editing = false;
+	settings_index = 0;
+	run_contract.phase = FPS_RUN_SETTINGS;
+	sync_run_contract();
+	set_mouse_capture(false);
+});
+
+/// Returns from the controls screen to the existing title flow.
+close_settings = method(id, function() {
+	run_contract.phase = FPS_RUN_TITLE;
+	sync_run_contract();
+	set_mouse_capture(false);
+});
+
+/// Persists one selected control and updates the live controller fields immediately.
+adjust_settings = method(id, function(_direction) {
+	if (settings_index == 0) {
+		profile.mouse_sensitivity = fps_profile_adjust_mouse_sensitivity(
+			profile.mouse_sensitivity,
+			_direction
+		);
+	} else {
+		profile.invert_vertical_look = !profile.invert_vertical_look;
+	}
+	apply_profile_settings();
+	fps_profile_save(profile);
+	profile_status = "CONTROLS SAVED";
 });
 
 /// Awards a defeated enemy from its generated room and socket identity.
@@ -199,6 +240,7 @@ spawn_room_encounter = method(id, function() {
 /// Starts a fresh deterministic run and clears every run-scoped object and value.
 start_run = method(id, function(_seed) {
 	clear_room_instances();
+	apply_profile_settings();
 	sector_seed = fps_run_normalize_seed(_seed);
 	run_contract = fps_run_begin(sector_seed);
 	sync_run_contract();
@@ -318,6 +360,8 @@ show_title = method(id, function(_seed) {
 	run_started = false;
 	profile_reset_confirm = false;
 	archive_index = 0;
+	settings_index = 0;
+	apply_profile_settings();
 	set_mouse_capture(false);
 	profile_status = "PROFILE READY";
 });

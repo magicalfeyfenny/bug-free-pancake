@@ -12,6 +12,7 @@ if (run_state != FPS_RUN_PAUSED) {
 if (run_state == FPS_RUN_RESET_CONFIRM) {
 	if (keyboard_check_pressed(vk_enter)) {
 		profile = fps_profile_reset_file();
+		apply_profile_settings();
 		profile_status = "PROFILE RESET COMPLETE";
 		max_health = fps_profile_starting_max_health(profile);
 		current_health = max_health;
@@ -39,6 +40,10 @@ if (run_state == FPS_RUN_TITLE) {
 		profile_reset_confirm = true;
 		run_contract.phase = FPS_RUN_RESET_CONFIRM;
 		sync_run_contract();
+		exit;
+	}
+	if (keyboard_check_pressed(ord("C"))) {
+		open_settings();
 		exit;
 	}
 	if (keyboard_check_pressed(ord("A"))) {
@@ -72,6 +77,30 @@ if (run_state == FPS_RUN_TITLE) {
 		var _entered_seed = string_length(seed_input) > 0 ? real(seed_input) : FPS_SECTOR_DEFAULT_SEED;
 		seed_editing = false;
 		start_run(_entered_seed);
+	}
+	exit;
+}
+
+if (run_state == FPS_RUN_SETTINGS) {
+	if (keyboard_check_pressed(vk_escape) || keyboard_check_pressed(ord("C"))) {
+		close_settings();
+		exit;
+	}
+	if (keyboard_check_pressed(vk_up)) {
+		settings_index = max(0, settings_index - 1);
+	}
+	if (keyboard_check_pressed(vk_down)) {
+		settings_index = min(1, settings_index + 1);
+	}
+	if (settings_index == 0) {
+		if (keyboard_check_pressed(vk_left)) adjust_settings(-1);
+		if (keyboard_check_pressed(vk_right)) adjust_settings(1);
+	} else if (
+		keyboard_check_pressed(vk_left)
+		|| keyboard_check_pressed(vk_right)
+		|| keyboard_check_pressed(vk_enter)
+	) {
+		adjust_settings(0);
 	}
 	exit;
 }
@@ -227,7 +256,12 @@ if (keyboard_check_pressed(ord("R"))) {
 var _mouse_delta_x = clamp(window_mouse_get_delta_x(), -80, 80);
 var _mouse_delta_y = clamp(window_mouse_get_delta_y(), -80, 80);
 yaw = (yaw + _mouse_delta_x * mouse_sensitivity + 360) mod 360;
-pitch = clamp(pitch - _mouse_delta_y * mouse_sensitivity, -72, 72);
+pitch = fps_profile_apply_vertical_look(
+	pitch,
+	_mouse_delta_y,
+	mouse_sensitivity,
+	invert_vertical_look
+);
 
 var _forward_input = keyboard_check(ord("W")) - keyboard_check(ord("S"));
 var _strafe_input = keyboard_check(ord("D")) - keyboard_check(ord("A"));

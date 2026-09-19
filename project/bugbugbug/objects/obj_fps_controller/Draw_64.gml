@@ -311,7 +311,7 @@ if (run_state == FPS_RUN_TITLE || run_state == FPS_RUN_RESET_CONFIRM) {
 	draw_text(_center_x, 132, "A SEEDED CONTAINMENT ROGUELITE");
 	draw_set_color(make_color_rgb(184, 199, 216));
 	draw_text(_center_x, 184, "ENTER  BEGIN RUN");
-	draw_text(_center_x, 216, "N  RANDOM SEED     S  EDIT SEED     A  ARCHIVE");
+	draw_text(_center_x, 216, "N  RANDOM SEED     S  EDIT SEED     A  ARCHIVE     C  CONTROLS");
 	draw_text(_center_x, 248, "X  RESET PROFILE");
 	draw_set_color(make_color_rgb(255, 226, 150));
 	draw_text(_center_x, 302, "SEED  " + seed_input + (seed_editing ? "_" : ""));
@@ -330,6 +330,38 @@ if (run_state == FPS_RUN_TITLE || run_state == FPS_RUN_RESET_CONFIRM) {
 		draw_set_color(c_white);
 		draw_text(_center_x, 548, "ENTER CONFIRM   ESC CANCEL");
 	}
+}
+
+if (run_state == FPS_RUN_SETTINGS) {
+	draw_set_alpha(0.94);
+	draw_set_color(make_color_rgb(3, 8, 15));
+	draw_rectangle(0, 0, _gui_width, _gui_height, false);
+	draw_set_alpha(1);
+	draw_set_halign(fa_center);
+	draw_set_valign(fa_top);
+	draw_set_color(make_color_rgb(102, 255, 225));
+	draw_text(_center_x, 96, "CONTROLS // AIM SETTINGS");
+	draw_set_color(make_color_rgb(184, 199, 216));
+	draw_text(_center_x, 140, "Settings save to the local profile before the next run.");
+	draw_set_color(settings_index == 0 ? make_color_rgb(255, 226, 150) : c_white);
+	draw_text(_center_x, 220, "MOUSE SENSITIVITY");
+	draw_set_color(c_white);
+	draw_text(
+		_center_x,
+		258,
+		string(mouse_sensitivity) + "   ["
+			+ string(FPS_PROFILE_MIN_MOUSE_SENSITIVITY) + " - "
+			+ string(FPS_PROFILE_MAX_MOUSE_SENSITIVITY) + "]"
+	);
+	draw_set_color(settings_index == 1 ? make_color_rgb(255, 226, 150) : c_white);
+	draw_text(_center_x, 330, "INVERT VERTICAL LOOK");
+	draw_set_color(c_white);
+	draw_text(_center_x, 368, invert_vertical_look ? "ON" : "OFF");
+	draw_set_color(make_color_rgb(118, 224, 255));
+	draw_text(_center_x, 444, profile_status);
+	draw_set_color(make_color_rgb(184, 199, 216));
+	draw_set_valign(fa_bottom);
+	draw_text(_center_x, _gui_height - 96, "UP / DOWN SELECT   LEFT / RIGHT ADJUST   ENTER TOGGLE   C OR ESC BACK");
 }
 
 if (run_state == FPS_RUN_ARCHIVE) {

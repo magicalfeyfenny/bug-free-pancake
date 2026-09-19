@@ -17,6 +17,7 @@ Controls:
 - `Esc`: pause or resume an active run; close a lore panel
 - `Enter`: begin the selected seed or confirm a summary action
 - `S`: edit the numeric seed; `N`: choose a random seed or return to the title with one
+- `C`: open title controls; use `Up`/`Down` to select, `Left`/`Right` to adjust, and `Enter` to toggle inversion
 - `A`: reread discovered archives from the title or summary; `X`: reset the profile after confirmation
 
 The chaser and ranged skirmisher use distinct authored low-poly models. Their
@@ -34,8 +35,10 @@ The active HUD and victory or death summary show the run score. Defeated roles
 award fixed points, each cleared generated space awards one room bonus, and the
 finale awards its bonus only on victory; restarting a seed resets the score.
 Cleared combat spaces offer three deterministic reward cards. A versioned local
-profile records discoveries, victories, and bounded unlocks; unsupported or
-corrupt profile data falls back to a clean profile.
+profile records discoveries, victories, bounded unlocks, mouse sensitivity, and
+vertical-look inversion; legacy profile data migrates without losing discoveries,
+victories, or unlock ownership, while unsupported or corrupt data falls back to
+safe defaults.
 The Pulse Rifle, Scatter Cannon, Burst Carbine, and Rail Lance trade firing
 pattern, reach, cadence, and ammunition differently. Six optional archive
 entries explain the facility, assignment, breach, hostiles, shifting sectors,

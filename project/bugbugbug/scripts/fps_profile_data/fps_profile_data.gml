@@ -1,10 +1,15 @@
-#macro FPS_PROFILE_SAVE_VERSION 1
+#macro FPS_PROFILE_SAVE_VERSION 2
+#macro FPS_PROFILE_LEGACY_SAVE_VERSION 1
 #macro FPS_PROFILE_SAVE_FILE "containment_protocol_profile.ini"
 #macro FPS_PROFILE_LORE_COUNT 6
 #macro FPS_PROFILE_UNLOCK_COUNT 3
 #macro FPS_PROFILE_UNLOCK_RAIL "rail-lance"
 #macro FPS_PROFILE_UNLOCK_ARCHIVE "archive-echo"
 #macro FPS_PROFILE_UNLOCK_VITALS "vital-buffer"
+#macro FPS_PROFILE_DEFAULT_MOUSE_SENSITIVITY 0.16
+#macro FPS_PROFILE_MIN_MOUSE_SENSITIVITY 0.04
+#macro FPS_PROFILE_MAX_MOUSE_SENSITIVITY 0.50
+#macro FPS_PROFILE_MOUSE_SENSITIVITY_STEP 0.02
 
 /// Returns the stable identity for one persistent content unlock.
 function fps_profile_unlock_id(_index) {
@@ -17,6 +22,45 @@ function fps_profile_unlock_id(_index) {
 	return "unknown-unlock";
 }
 
+/// Accepts only bounded sensitivity values from the persistent profile.
+function fps_profile_mouse_sensitivity_is_valid(_value) {
+	return is_real(_value)
+		&& _value >= FPS_PROFILE_MIN_MOUSE_SENSITIVITY
+		&& _value <= FPS_PROFILE_MAX_MOUSE_SENSITIVITY;
+}
+
+/// Accepts the boolean forms written by GameMaker and the INI loader.
+function fps_profile_invert_vertical_look_is_valid(_value) {
+	return is_bool(_value) || (is_real(_value) && (_value == 0 || _value == 1));
+}
+
+/// Converts missing, malformed, or out-of-range sensitivity to the safe default.
+function fps_profile_normalize_mouse_sensitivity(_value) {
+	return fps_profile_mouse_sensitivity_is_valid(_value)
+		? _value
+		: FPS_PROFILE_DEFAULT_MOUSE_SENSITIVITY;
+}
+
+/// Converts missing or malformed inversion data to the safe non-inverted default.
+function fps_profile_normalize_invert_vertical_look(_value) {
+	return fps_profile_invert_vertical_look_is_valid(_value) && _value != 0;
+}
+
+/// Changes sensitivity in bounded steps for the title settings screen.
+function fps_profile_adjust_mouse_sensitivity(_value, _direction) {
+	var _safe_value = fps_profile_normalize_mouse_sensitivity(_value);
+	var _safe_direction = is_real(_direction) ? clamp(round(_direction), -1, 1) : 0;
+	var _next_value = _safe_value + _safe_direction * FPS_PROFILE_MOUSE_SENSITIVITY_STEP;
+	return clamp(round(_next_value * 100) / 100, FPS_PROFILE_MIN_MOUSE_SENSITIVITY, FPS_PROFILE_MAX_MOUSE_SENSITIVITY);
+}
+
+/// Applies one captured vertical mouse delta using the selected inversion setting.
+function fps_profile_apply_vertical_look(_pitch, _mouse_delta_y, _sensitivity, _invert_vertical_look) {
+	var _safe_sensitivity = fps_profile_normalize_mouse_sensitivity(_sensitivity);
+	var _direction = fps_profile_normalize_invert_vertical_look(_invert_vertical_look) ? 1 : -1;
+	return clamp(_pitch + _direction * _mouse_delta_y * _safe_sensitivity, -72, 72);
+}
+
 /// Creates the safe empty profile used for missing, corrupt, and new saves.
 function fps_profile_defaults() {
 	return {
@@ -25,10 +69,12 @@ function fps_profile_defaults() {
 		victories: 0,
 		discovered_lore: array_create(FPS_PROFILE_LORE_COUNT, false),
 		unlocks: array_create(FPS_PROFILE_UNLOCK_COUNT, false),
+		mouse_sensitivity: FPS_PROFILE_DEFAULT_MOUSE_SENSITIVITY,
+		invert_vertical_look: false,
 	};
 }
 
-/// Checks the complete in-memory save contract before it is trusted.
+/// Checks the persistent profile data shared by v1 saves and the current contract.
 function fps_profile_data_is_valid(_data) {
 	if (!is_struct(_data)) {
 		return false;
@@ -44,7 +90,10 @@ function fps_profile_data_is_valid(_data) {
 	}
 	if (
 		!is_real(_data.save_version)
-		|| _data.save_version != FPS_PROFILE_SAVE_VERSION
+		|| (
+			_data.save_version != FPS_PROFILE_SAVE_VERSION
+			&& _data.save_version != FPS_PROFILE_LEGACY_SAVE_VERSION
+		)
 		|| !is_real(_data.runs)
 		|| !is_real(_data.victories)
 		|| !is_array(_data.discovered_lore)
@@ -86,6 +135,14 @@ function fps_profile_to_data(_profile) {
 	for (var _unlock_index = 0; _unlock_index < FPS_PROFILE_UNLOCK_COUNT; _unlock_index += 1) {
 		_unlocks[_unlock_index] = _profile.unlocks[_unlock_index];
 	}
+	var _mouse_sensitivity = FPS_PROFILE_DEFAULT_MOUSE_SENSITIVITY;
+	if (variable_struct_exists(_profile, "mouse_sensitivity")) {
+		_mouse_sensitivity = fps_profile_normalize_mouse_sensitivity(_profile.mouse_sensitivity);
+	}
+	var _invert_vertical_look = false;
+	if (variable_struct_exists(_profile, "invert_vertical_look")) {
+		_invert_vertical_look = fps_profile_normalize_invert_vertical_look(_profile.invert_vertical_look);
+	}
 
 	return {
 		save_version: FPS_PROFILE_SAVE_VERSION,
@@ -93,6 +150,8 @@ function fps_profile_to_data(_profile) {
 		victories: max(0, floor(_profile.victories)),
 		discovered_lore: _discovered_lore,
 		unlocks: _unlocks,
+		mouse_sensitivity: _mouse_sensitivity,
+		invert_vertical_look: _invert_vertical_look,
 	};
 }
 
@@ -110,6 +169,12 @@ function fps_profile_from_data(_data) {
 	}
 	for (var _unlock_index = 0; _unlock_index < FPS_PROFILE_UNLOCK_COUNT; _unlock_index += 1) {
 		_profile.unlocks[_unlock_index] = _data.unlocks[_unlock_index] != 0;
+	}
+	if (variable_struct_exists(_data, "mouse_sensitivity")) {
+		_profile.mouse_sensitivity = fps_profile_normalize_mouse_sensitivity(_data.mouse_sensitivity);
+	}
+	if (variable_struct_exists(_data, "invert_vertical_look")) {
+		_profile.invert_vertical_look = fps_profile_normalize_invert_vertical_look(_data.invert_vertical_look);
 	}
 
 	return _profile;
@@ -210,6 +275,8 @@ function fps_profile_save_file(_profile, _filename) {
 		var _unlock_id = fps_profile_unlock_id(_unlock_index);
 		ini_write_real("unlocks", _unlock_id, _data.unlocks[_unlock_index] ? 1 : 0);
 	}
+	ini_write_real("settings", "mouse_sensitivity", _data.mouse_sensitivity);
+	ini_write_real("settings", "invert_vertical_look", _data.invert_vertical_look ? 1 : 0);
 	ini_close();
 	return true;
 }
@@ -227,6 +294,12 @@ function fps_profile_load_file(_filename) {
 		victories: ini_read_real("meta", "victories", 0),
 		discovered_lore: array_create(FPS_PROFILE_LORE_COUNT, false),
 		unlocks: array_create(FPS_PROFILE_UNLOCK_COUNT, false),
+		mouse_sensitivity: ini_read_real(
+			"settings",
+			"mouse_sensitivity",
+			FPS_PROFILE_DEFAULT_MOUSE_SENSITIVITY
+		),
+		invert_vertical_look: ini_read_real("settings", "invert_vertical_look", 0),
 	};
 	for (var _lore_index = 0; _lore_index < FPS_PROFILE_LORE_COUNT; _lore_index += 1) {
 		var _lore_id = fps_create_lore_entries()[_lore_index].id;

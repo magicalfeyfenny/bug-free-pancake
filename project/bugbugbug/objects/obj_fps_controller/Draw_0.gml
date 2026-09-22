@@ -36,6 +36,32 @@ gpu_set_cullmode(cull_noculling);
 
 vertex_submit(arena_buffer, pr_trianglelist, -1);
 
+if (run_state == FPS_RUN_PLAYING && is_struct(containment_surge) && is_struct(containment_surge_state)) {
+	var _surge_scale = containment_surge.radius * 2;
+	var _surge_height = 0.025;
+	if (containment_surge_state.phase == FPS_CONTAINMENT_SURGE_WARNING) {
+		_surge_scale *= 0.78;
+		_surge_height = 0.06;
+	} else if (containment_surge_state.phase == FPS_CONTAINMENT_SURGE_ACTIVE) {
+		_surge_height = 0.1;
+	}
+	matrix_set(
+		matrix_world,
+		matrix_build(
+			containment_surge.x,
+			containment_surge.y,
+			1.5,
+			0,
+			0,
+			containment_surge_state.cycle_index * 12,
+			_surge_scale,
+			_surge_scale,
+			_surge_height
+		)
+	);
+	vertex_submit(enemy_warning_buffer, pr_trianglelist, -1);
+}
+
 var _pickup_count = array_length(pickups);
 for (var _pickup_index = 0; _pickup_index < _pickup_count; _pickup_index += 1) {
 	var _pickup = pickups[_pickup_index];

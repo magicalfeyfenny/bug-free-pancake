@@ -28,6 +28,12 @@ The generated sector uses six aligned start, connector, combat, safe, archive,
 and finale spaces. Its solids are shared by rendering, actor movement,
 projectile travel, and hitscan occlusion. Each seed places three weapon caches,
 med gel, an ammo cell, and a temporary overcharge in clear tile positions.
+Each generated combat space also carries one deterministic Containment Surge at
+a clear location. It cycles through IDLE, WARNING, and ACTIVE states; the active
+field can damage an exposed player once per cycle, while sector cover and Phase
+Dash protection remain effective. The warning and active states are identified
+through the existing notice and HUD paths, and the hazard resets with its room
+or run.
 During an active run, the route strip shows all six generated spaces in order;
 `CURRENT`, `CLEARED`, `NEXT`, and `FINALE` markers track the selected seed as
 rooms change.

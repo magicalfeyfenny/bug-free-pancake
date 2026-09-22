@@ -60,6 +60,17 @@ var _dash_status = fps_dash_is_active(dash)
 		: "PHASE DASH  RECHARGING " + string(ceil(dash.cooldown_frames / 60)) + "s";
 draw_text(40, 188, _dash_status);
 
+if (run_state == FPS_RUN_PLAYING && is_struct(containment_surge) && is_struct(containment_surge_state)) {
+	draw_set_color(
+		containment_surge_state.phase == FPS_CONTAINMENT_SURGE_ACTIVE
+			? make_color_rgb(255, 104, 91)
+			: containment_surge_state.phase == FPS_CONTAINMENT_SURGE_WARNING
+				? make_color_rgb(255, 226, 150)
+				: make_color_rgb(184, 199, 216)
+	);
+	draw_text(40, 208, "CONTAINMENT SURGE  " + fps_containment_surge_phase_name(containment_surge_state.phase));
+}
+
 var _tile_index = fps_sector_tile_at(sector, x, y);
 var _tile_label = _tile_index >= 0 ? sector.tiles[_tile_index].role_name : "TRANSIT";
 var _archive_count = 0;

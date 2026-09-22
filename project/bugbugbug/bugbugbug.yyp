@@ -64,6 +64,7 @@
     {"id":{"name":"GMTL_remove_unused_msg","path":"scripts/GMTL_remove_unused_msg/GMTL_remove_unused_msg.yy",},},
     {"id":{"name":"s_gmtl_demo_clickable","path":"sprites/s_gmtl_demo_clickable/s_gmtl_demo_clickable.yy",},},
     {"id":{"name":"fps_gameplay_tests","path":"scripts/fps_gameplay_tests/fps_gameplay_tests.yy",},},
+    {"id":{"name":"fps_containment_surge_tests","path":"scripts/fps_containment_surge_tests/fps_containment_surge_tests.yy",},},
     {"id":{"name":"fps_profile_tests","path":"scripts/fps_profile_tests/fps_profile_tests.yy",},},
   ],
   "resourceType":"GMProject",

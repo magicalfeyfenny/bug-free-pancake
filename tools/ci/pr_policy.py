@@ -7,6 +7,7 @@ import fnmatch
 import json
 import os
 import re
+import shlex
 import sys
 import tomllib
 from dataclasses import dataclass
@@ -46,6 +47,41 @@ GENERIC_VALIDATION_COMMANDS = frozenset(
         "git diff --check",
         "format",
         "repository policy",
+    }
+)
+FOCUSED_COMMANDS = frozenset(
+    {
+        "bash",
+        "cargo",
+        "cmake",
+        "ctest",
+        "dotnet",
+        "go",
+        "make",
+        "node",
+        "npm",
+        "npx",
+        "pnpm",
+        "pytest",
+        "python",
+        "python3",
+        "python3.12",
+        "sh",
+        "shellcheck",
+        "yarn",
+    }
+)
+FOCUSED_TARGET_RE = re.compile(
+    r"(?i)(?:^|[/.:_-])(?:test|tests|spec|specs|check|validate|verify|focused)(?:[/._:-]|[0-9]|$)"
+)
+FOCUSED_SELECTOR_FLAGS = frozenset(
+    {
+        "-k",
+        "--filter",
+        "--grep",
+        "--runTestsByPath",
+        "--testNamePattern",
+        "--testPathPattern",
     }
 )
 @dataclass(frozen=True)
@@ -234,6 +270,48 @@ def focused_validation_items(body: str) -> list[str]:
     ]
 
 
+def _is_focused_machine_command(item: str) -> bool:
+    """Reject prose and broad commands as medium-risk focused evidence."""
+    try:
+        tokens = shlex.split(item)
+    except ValueError:
+        return False
+
+    if not tokens:
+        return False
+
+    executable = tokens[0]
+    executable_name = Path(executable).name.casefold()
+    if executable_name not in FOCUSED_COMMANDS and "/" not in executable and "\\" not in executable:
+        return False
+
+    arguments = tokens[1:]
+    if not arguments:
+        return bool(
+            ("/" in executable or "\\" in executable)
+            and FOCUSED_TARGET_RE.search(executable_name)
+        )
+
+    generic_targets = {".", "./...", "test", "tests", "spec", "specs", "check"}
+    for index, argument in enumerate(arguments):
+        normalized = argument.casefold()
+        if normalized in generic_targets:
+            continue
+        if FOCUSED_TARGET_RE.search(normalized):
+            return True
+        if ("/" in argument or "\\" in argument) and normalized not in {"./...", "tests/", "test/", "specs/"}:
+            return True
+        if argument in FOCUSED_SELECTOR_FLAGS and index + 1 < len(arguments):
+            return bool(arguments[index + 1].strip())
+        if any(
+            argument.startswith(flag + "=") and argument[len(flag) + 1 :].strip()
+            for flag in FOCUSED_SELECTOR_FLAGS
+        ):
+            return True
+
+    return False
+
+
 def medium_validation_errors(
     body: str,
     completion_labels: set[str],
@@ -259,13 +337,13 @@ def medium_validation_errors(
             or "run_repository_checks.py repository-policy" in normalized
             or "run_repository_checks.py tests" in normalized
         )
-        if not generic:
+        if not generic and _is_focused_machine_command(item):
             meaningful.append(item)
 
     if not meaningful:
         return [
             "risk:medium focused validation must establish a "
-            "change-specific claim"
+            "change-specific claim with a machine-verifiable command"
         ]
 
     return []

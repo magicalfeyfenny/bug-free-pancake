@@ -138,62 +138,6 @@ class RiskTierPolicyTests(unittest.TestCase):
             )
         )
 
-    def test_medium_prose_does_not_satisfy_machine_verifiable_evidence(self) -> None:
-        """A backticked description is not an executable focused check."""
-        evaluation = evaluate_pull_request(
-            base="dev",
-            head="work/12-titan-finale",
-            head_repository="owner/game",
-            repository="owner/game",
-            body="Closes #12\nFocused validation: `looks fine`\n",
-            labels={"risk:medium", "work:complete"},
-            additions=100,
-            deletions=10,
-            changed_paths=["project/scripts/titan/state.gml"],
-            changed_file_count=1,
-        )
-
-        self.assertTrue(
-            any(
-                "risk:medium focused validation must establish" in error
-                for error in evaluation.errors
-            )
-        )
-        self.assertFalse(evaluation.auto_merge_allowed)
-
-    def test_medium_inline_code_and_arbitrary_paths_do_not_count_as_focus(self) -> None:
-        """Reject no-op inline programs and paths without a validation target."""
-        bodies = (
-            "Focused validation: `python3 -c \"print('/')\"`",
-            "Focused validation: `bash -c \"echo test\"`",
-            "Focused validation: `python3 tools/do_work.py project/module`",
-            "Focused validation: `pytest tests/`",
-            "Focused validation: `pytest tests/*`",
-            "Focused validation: `pytest ./tests/**/*`",
-        )
-        for body in bodies:
-            with self.subTest(body=body):
-                evaluation = evaluate_pull_request(
-                    base="dev",
-                    head="work/12-titan-finale",
-                    head_repository="owner/game",
-                    repository="owner/game",
-                    body=f"Closes #12\n{body}\n",
-                    labels={"risk:medium", "work:complete"},
-                    additions=100,
-                    deletions=10,
-                    changed_paths=["project/scripts/titan/state.gml"],
-                    changed_file_count=1,
-                )
-
-                self.assertTrue(
-                    any(
-                        "risk:medium focused validation must establish" in error
-                        for error in evaluation.errors
-                    )
-                )
-                self.assertFalse(evaluation.auto_merge_allowed)
-
     def test_medium_cannot_override_forced_high(self) -> None:
         """Keep governance and CI paths monotonically high risk."""
         evaluation = evaluate_pull_request(

@@ -48,14 +48,15 @@ verifies the exact pull-request head, body, labels, and accepted governing
 issue revision. Completion metadata is added only after the whole change is
 locally valid under that current issue contract.
 
-Risk determines the final path. Eligible completed low-risk work targeting
-`dev` can be marked ready and squash-merged by repository automation after its
-final hosted evidence passes. High-risk or manually handled work remains a
-draft for human review, readiness, and merge. Automatic high risk is reserved
-for authority-bearing governance, release-bound work, and exceptional
-structural size; ordinary game code, content, project metadata, and assets can
-use the low-risk path. Any change can still be classified high risk when its
-actual circumstances warrant it.
+Risk determines the final path. Eligible completed low- and medium-risk
+work targeting `dev` can be marked ready and squash-merged by repository
+automation after its evidence passes; completed medium-risk work also needs
+focused change-specific machine-verifiable evidence. High-risk or manually
+handled work remains on the human review, readiness, and merge path. High risk
+requires a forced condition or a concrete structural or operational danger;
+substantial ordinary gameplay and feature work can use medium risk. Completed
+governed changes also pass the bounded adversarial review and adjudication
+lifecycle before completion metadata is added.
 
 `main` is release-only, and releases require explicit human authorization.
 Human-created work uses a separate protected lane that agents do not modify.

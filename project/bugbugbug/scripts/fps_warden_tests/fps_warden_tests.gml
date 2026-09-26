@@ -146,6 +146,7 @@ suite(function() {
 			expect(_combat_index >= 0).toBeTruthy();
 
 			var _warden_seen = false;
+			var _role_probe = create(0, 0, obj_fps_enemy);
 			for (var _seed_index = 0; _seed_index < 64; _seed_index += 1) {
 				var _seed = 7001 + _seed_index * 97;
 				var _first = fps_run_create_room_plan(_sector, _seed, _combat_index, 2);
@@ -154,9 +155,15 @@ suite(function() {
 				for (var _entry_index = 0; _entry_index < array_length(_first.entries); _entry_index += 1) {
 					var _entry = _first.entries[_entry_index];
 					expect(_entry.kind == FPS_ENEMY_KIND_TITAN).toBeFalsy();
+					fps_enemy_apply_role(_role_probe, _entry.kind);
 					if (_entry.kind == FPS_ENEMY_KIND_WARDEN) {
 						_warden_seen = true;
 						expect(_entry.identity).toBe("warden");
+						expect(_role_probe.warden_barrier_state).toBe(FPS_WARDEN_BARRIER_UP);
+					} else {
+						expect(_role_probe.warden_barrier_state).toBe(FPS_WARDEN_BARRIER_NONE);
+						expect(fps_enemy_update_warden_barrier(_role_probe)).toBeFalsy();
+						expect(fps_enemy_weapon_hit_blocked(_role_probe, 100, 0)).toBeFalsy();
 					}
 				}
 
@@ -169,6 +176,7 @@ suite(function() {
 				expect(_finale.entries[array_length(_finale.entries) - 1].kind).toBe(FPS_ENEMY_KIND_TITAN);
 			}
 			expect(_warden_seen).toBeTruthy();
+			instance_destroy(_role_probe);
 		});
 	});
 });

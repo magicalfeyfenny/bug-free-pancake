@@ -212,6 +212,20 @@ function fps_build_enemy_role_buffer(_format, _kind, _hit) {
 			fps_append_box(_buffer, 0.24, -0.16, 0.56, 0.78, 0.16, 0.82, _base_colour);
 			fps_append_box(_buffer, -0.18, -0.18, 1.42, 0.18, 0.18, 1.76, _base_colour);
 			break;
+		case FPS_ENEMY_KIND_WARDEN:
+			fps_append_box(_buffer, -0.48, -0.48, 0, 0.48, 0.48, 1.24, _base_colour);
+			fps_append_box(_buffer, -0.32, -0.34, 1.24, 0.32, 0.34, 1.58, _base_colour);
+			fps_append_box(
+				_buffer,
+				0.44,
+				-0.72,
+				0.28,
+				0.66,
+				0.72,
+				1.42,
+				merge_color(_base_colour, c_white, 0.42)
+			);
+			break;
 		case FPS_ENEMY_KIND_TITAN:
 			fps_append_box(_buffer, -0.86, -0.62, 0, 0.86, 0.62, 0.46, _base_colour);
 			fps_append_box(_buffer, -0.58, -0.48, 0.46, 0.58, 0.48, 1.52, _base_colour);

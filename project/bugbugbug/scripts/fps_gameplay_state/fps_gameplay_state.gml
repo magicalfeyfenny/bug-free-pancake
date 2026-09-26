@@ -10,13 +10,18 @@
 #macro FPS_ENEMY_KIND_RANGED 1
 #macro FPS_ENEMY_KIND_BURROWER 2
 #macro FPS_ENEMY_KIND_SENTRY 3
-#macro FPS_ENEMY_KIND_TITAN 4
-#macro FPS_ENEMY_KIND_COUNT 5
+#macro FPS_ENEMY_KIND_WARDEN 4
+#macro FPS_ENEMY_KIND_TITAN 5
+#macro FPS_ENEMY_KIND_COUNT 6
 
 #macro FPS_ENEMY_PHASE_NONE -1
 #macro FPS_TITAN_PHASE_AWAKENING 0
 #macro FPS_TITAN_PHASE_SIEGE 1
 #macro FPS_TITAN_PHASE_TWO_THRESHOLD 180
+
+#macro FPS_WARDEN_BARRIER_NONE -1
+#macro FPS_WARDEN_BARRIER_UP 0
+#macro FPS_WARDEN_BARRIER_OPEN 1
 
 #macro FPS_ENEMY_WARNING_AREA 0
 #macro FPS_ENEMY_WARNING_BEAM 1
@@ -263,6 +268,32 @@ function fps_enemy_role_definition(_kind) {
 				projectile_speed: 7,
 				projectile_lifetime: 220,
 			};
+		case FPS_ENEMY_KIND_WARDEN:
+			return {
+				identity: "warden",
+				label: "WARDEN",
+				max_health: 180,
+				move_speed: 2.1,
+				stop_distance: 94,
+				attack_range: 125,
+				attack_damage: 24,
+				attack_delay: 96,
+				collision_radius: 36,
+				hit_sphere_height: 76,
+				hit_sphere_radius: 46,
+				health_colour: make_color_rgb(74, 213, 188),
+				colour: make_color_rgb(74, 213, 188),
+				warning_colour: make_color_rgb(255, 199, 92),
+				warning_radius: 132,
+				warning_shape: FPS_ENEMY_WARNING_AREA,
+				telegraph_frames: 30,
+				projectile_speed: 0,
+				projectile_lifetime: 0,
+				barrier_up_frames: 96,
+				barrier_open_frames: 36,
+				barrier_turn_speed: 3,
+				barrier_arc_half_angle: 60,
+			};
 		case FPS_ENEMY_KIND_TITAN:
 			return {
 				identity: "titan",
@@ -343,6 +374,22 @@ function fps_enemy_apply_role(_enemy, _kind) {
 	_enemy.phase_threshold = variable_struct_exists(_definition, "phase_threshold")
 		? _definition.phase_threshold
 		: -1;
+	_enemy.warden_barrier_state = variable_struct_exists(_definition, "barrier_up_frames")
+		? FPS_WARDEN_BARRIER_UP
+		: FPS_WARDEN_BARRIER_NONE;
+	_enemy.warden_barrier_frames_remaining = variable_struct_exists(_definition, "barrier_up_frames")
+		? _definition.barrier_up_frames
+		: 0;
+	_enemy.warden_barrier_turn_speed = variable_struct_exists(_definition, "barrier_turn_speed")
+		? _definition.barrier_turn_speed
+		: 0;
+	_enemy.warden_barrier_arc_half_angle = variable_struct_exists(_definition, "barrier_arc_half_angle")
+		? _definition.barrier_arc_half_angle
+		: 0;
+	_enemy.warden_facing_angle = 0;
+	_enemy.combat_phase_name = _kind == FPS_ENEMY_KIND_WARDEN
+		? fps_enemy_warden_barrier_name(_enemy.warden_barrier_state)
+		: _enemy.combat_phase_name;
 	_enemy.mode = FPS_RANGED_MODE_EVADE;
 	_enemy.mode_frames = 90;
 	_enemy.strafe_direction = 1;
@@ -526,6 +573,7 @@ function fps_enemy_resolve_telegraph(_enemy, _player) {
 
 	switch (_enemy.enemy_kind) {
 		case FPS_ENEMY_KIND_BURROWER:
+		case FPS_ENEMY_KIND_WARDEN:
 		case FPS_ENEMY_KIND_TITAN:
 			if (_distance <= _enemy.warning_radius) {
 				_player.take_damage(_enemy.attack_damage);
@@ -668,6 +716,23 @@ function fps_enemy_step_titan(_enemy, _player) {
 	}
 }
 
+/// Advances toward the player and starts the Warden's close area strike.
+function fps_enemy_step_warden(_enemy, _player) {
+	var _distance = fps_enemy_move_toward(_enemy, _player, _enemy.stop_distance);
+	if (
+		_distance <= _enemy.attack_range
+		&& _enemy.attack_cooldown <= 0
+		&& !fps_sector_line_blocked(_player.sector, _enemy.x, _enemy.y, _player.x, _player.y)
+	) {
+		fps_enemy_begin_telegraph(
+			_enemy,
+			_enemy.telegraph_max_frames,
+			_enemy.warning_radius,
+			_enemy.warning_shape
+		);
+	}
+}
+
 /// Dispatches one frame of role-specific behavior after shared lifecycle work.
 function fps_enemy_step_role(_enemy, _player) {
 	switch (_enemy.enemy_kind) {
@@ -675,6 +740,7 @@ function fps_enemy_step_role(_enemy, _player) {
 		case FPS_ENEMY_KIND_RANGED: fps_enemy_step_ranged(_enemy, _player); break;
 		case FPS_ENEMY_KIND_BURROWER: fps_enemy_step_burrower(_enemy, _player); break;
 		case FPS_ENEMY_KIND_SENTRY: fps_enemy_step_sentry(_enemy, _player); break;
+		case FPS_ENEMY_KIND_WARDEN: fps_enemy_step_warden(_enemy, _player); break;
 		case FPS_ENEMY_KIND_TITAN: fps_enemy_step_titan(_enemy, _player); break;
 	}
 }

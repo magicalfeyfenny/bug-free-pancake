@@ -484,7 +484,9 @@ fire_weapon_rays = method(id, function(_shot) {
 		}
 
 		if (instance_exists(_nearest_enemy)) {
-			_nearest_enemy.take_damage(_shot.damage);
+			if (!fps_enemy_weapon_hit_blocked(_nearest_enemy, x, y)) {
+				_nearest_enemy.take_damage(_shot.damage);
+			}
 			hit_marker_frames = 6;
 		}
 	}
@@ -504,10 +506,12 @@ burrower_buffer = fps_build_enemy_role_buffer(geometry_format, FPS_ENEMY_KIND_BU
 burrower_hit_buffer = fps_build_enemy_role_buffer(geometry_format, FPS_ENEMY_KIND_BURROWER, true);
 sentry_buffer = fps_build_enemy_role_buffer(geometry_format, FPS_ENEMY_KIND_SENTRY, false);
 sentry_hit_buffer = fps_build_enemy_role_buffer(geometry_format, FPS_ENEMY_KIND_SENTRY, true);
+warden_buffer = fps_build_enemy_role_buffer(geometry_format, FPS_ENEMY_KIND_WARDEN, false);
+warden_hit_buffer = fps_build_enemy_role_buffer(geometry_format, FPS_ENEMY_KIND_WARDEN, true);
 titan_buffer = fps_build_enemy_role_buffer(geometry_format, FPS_ENEMY_KIND_TITAN, false);
 titan_hit_buffer = fps_build_enemy_role_buffer(geometry_format, FPS_ENEMY_KIND_TITAN, true);
-enemy_buffers = [enemy_buffer, ranged_enemy_buffer, burrower_buffer, sentry_buffer, titan_buffer];
-enemy_hit_buffers = [enemy_hit_buffer, ranged_enemy_hit_buffer, burrower_hit_buffer, sentry_hit_buffer, titan_hit_buffer];
+enemy_buffers = [enemy_buffer, ranged_enemy_buffer, burrower_buffer, sentry_buffer, warden_buffer, titan_buffer];
+enemy_hit_buffers = [enemy_hit_buffer, ranged_enemy_hit_buffer, burrower_hit_buffer, sentry_hit_buffer, warden_hit_buffer, titan_hit_buffer];
 enemy_projectile_buffer = fps_build_unit_box_buffer(geometry_format, make_color_rgb(255, 190, 45));
 enemy_warning_buffer = fps_build_unit_box_buffer(geometry_format, make_color_rgb(255, 114, 74));
 pickup_meshes = [];

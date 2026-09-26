@@ -109,7 +109,9 @@ for (var _enemy_index = 0; _enemy_index < _enemy_count; _enemy_index += 1) {
 		? enemy_hit_buffers[_enemy_kind]
 		: enemy_buffers[_enemy_kind];
 
-	var _facing = point_direction(_enemy.x, _enemy.y, x, y);
+	var _facing = _enemy.enemy_kind == FPS_ENEMY_KIND_WARDEN
+		? _enemy.warden_facing_angle
+		: point_direction(_enemy.x, _enemy.y, x, y);
 	matrix_set(
 		matrix_world,
 		matrix_build(

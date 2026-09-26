@@ -20,6 +20,11 @@ if (
 
 attack_cooldown = max(0, attack_cooldown - 1);
 
+if (enemy_kind == FPS_ENEMY_KIND_WARDEN) {
+	fps_enemy_update_warden_barrier(id);
+	fps_enemy_turn_warden(id, _player);
+}
+
 if (telegraph_frames > 0) {
 	telegraph_frames -= 1;
 	if (telegraph_frames <= 0) {

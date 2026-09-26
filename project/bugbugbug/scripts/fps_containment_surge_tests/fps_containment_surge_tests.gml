@@ -67,3 +67,89 @@ suite(function() {
 		});
 	});
 });
+
+suite(function() {
+	describe("Containment Surge controller integration", function() {
+		it("binds HUD state to the active room hazard and clears it on a safe-room transition", function() {
+			var _controller = instance_find(obj_fps_controller, 0);
+			var _previous_sector = _controller.sector;
+			var _previous_sector_seed = _controller.sector_seed;
+			var _previous_contract = _controller.run_contract;
+			var _previous_phase = _controller.phase;
+			var _previous_run_started = _controller.run_started;
+			var _previous_x = _controller.x;
+			var _previous_y = _controller.y;
+			var _previous_health = _controller.current_health;
+			var _previous_notice = _controller.pickup_notice;
+			var _previous_notice_frames = _controller.pickup_notice_frames;
+			var _previous_surge = _controller.containment_surge;
+			var _previous_surge_state = _controller.containment_surge_state;
+			var _previous_dash = _controller.dash;
+			var _sector = fps_sector_generate(13579, 1366, 768, 24, 200);
+
+			expect(_sector.tiles[2].role).toBe(FPS_SECTOR_ROLE_COMBAT);
+			expect(_sector.tiles[3].role).toBe(FPS_SECTOR_ROLE_SAFE);
+
+			_controller.sector = _sector;
+			_controller.sector_seed = 13579;
+			_controller.run_contract = fps_run_begin(13579);
+			_controller.run_contract.room_index = 2;
+			_controller.run_contract.room_complete = false;
+			_controller.sync_run_contract();
+			_controller.phase = FPS_STATE_PLAYING;
+			_controller.run_started = true;
+			_controller.x = _sector.tiles[2].center_x + 200;
+			_controller.y = _sector.tiles[2].center_y + 200;
+			_controller.configure_containment_surge();
+
+			var _combat_surge = _controller.containment_surge;
+			expect(is_struct(_combat_surge)).toBeTruthy();
+			expect(_combat_surge.id).toBe("containment-surge-3");
+			expect(_controller.containment_surge_state.phase).toBe(FPS_CONTAINMENT_SURGE_IDLE);
+
+			for (var _idle_frame = 0; _idle_frame < FPS_CONTAINMENT_SURGE_IDLE_FRAMES; _idle_frame += 1) {
+				_controller.tick_containment_surge();
+			}
+			expect(_controller.pickup_notice).toBe("CONTAINMENT SURGE // WARNING");
+			expect(fps_containment_surge_phase_name(_controller.containment_surge_state.phase)).toBe("WARNING");
+
+			for (var _warning_frame = 0; _warning_frame < FPS_CONTAINMENT_SURGE_WARNING_FRAMES; _warning_frame += 1) {
+				_controller.tick_containment_surge();
+			}
+			expect(_controller.pickup_notice).toBe("CONTAINMENT SURGE // ACTIVE");
+			expect(fps_containment_surge_phase_name(_controller.containment_surge_state.phase)).toBe("ACTIVE");
+			expect(_controller.current_health).toBe(_previous_health);
+
+			// Reconfiguring the room creates a fresh cycle with the same seeded identity.
+			_controller.configure_containment_surge();
+			expect(_controller.containment_surge.id).toBe(_combat_surge.id);
+			expect(_controller.containment_surge.x).toBe(_combat_surge.x);
+			expect(_controller.containment_surge.y).toBe(_combat_surge.y);
+			expect(_controller.containment_surge_state.phase).toBe(FPS_CONTAINMENT_SURGE_IDLE);
+			expect(_controller.containment_surge_state.cycle_index).toBe(0);
+
+			// Room entry uses this same encounter setup path; non-combat rooms have no HUD field.
+			_controller.run_contract.room_index = 3;
+			_controller.run_contract.room_complete = false;
+			_controller.sync_run_contract();
+			_controller.spawn_room_encounter();
+			expect(is_struct(_controller.containment_surge)).toBeFalsy();
+			expect(is_struct(_controller.containment_surge_state)).toBeFalsy();
+
+			_controller.sector = _previous_sector;
+			_controller.sector_seed = _previous_sector_seed;
+			_controller.run_contract = _previous_contract;
+			_controller.phase = _previous_phase;
+			_controller.run_started = _previous_run_started;
+			_controller.x = _previous_x;
+			_controller.y = _previous_y;
+			_controller.current_health = _previous_health;
+			_controller.pickup_notice = _previous_notice;
+			_controller.pickup_notice_frames = _previous_notice_frames;
+			_controller.containment_surge = _previous_surge;
+			_controller.containment_surge_state = _previous_surge_state;
+			_controller.dash = _previous_dash;
+			_controller.sync_run_contract();
+		});
+	});
+});

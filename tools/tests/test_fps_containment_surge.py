@@ -77,11 +77,30 @@ class FpsContainmentSurgeStructureTests(unittest.TestCase):
     def test_world_and_hud_present_the_existing_runtime_marker(self):
         """The warning mesh and native HUD identify the active room hazard."""
         self.assertIn("vertex_submit(enemy_warning_buffer", self.world_draw)
+        self.assertIn(
+            "run_state == FPS_RUN_PLAYING && is_struct(containment_surge) && is_struct(containment_surge_state)",
+            self.hud_draw,
+        )
         self.assertIn("fps_containment_surge_phase_name", self.hud_draw)
+        self.assertIn(
+            "fps_containment_surge_phase_name(containment_surge_state.phase)",
+            self.hud_draw,
+        )
         self.assertIn("CONTAINMENT SURGE", self.hud_draw)
         self.assertIn("IDLE", self.readme)
         self.assertIn("WARNING", self.readme)
         self.assertIn("ACTIVE", self.readme)
+
+    def test_room_entry_reconfigures_the_controller_hazard(self):
+        """The room-transition and run-start paths share the same hazard setup."""
+        start_run = self.controller_create.split("start_run = method(id, function(", 1)[1]
+        start_run = start_run.split("\n});", 1)[0]
+        advance_room = self.controller_create.split("advance_room = method(id, function(", 1)[1]
+        advance_room = advance_room.split("\n});", 1)[0]
+
+        self.assertIn("spawn_room_encounter();", start_run)
+        self.assertIn("spawn_room_encounter();", advance_room)
+        self.assertIn("configure_containment_surge();", self.controller_create)
 
 
 if __name__ == "__main__":

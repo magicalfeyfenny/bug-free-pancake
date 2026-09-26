@@ -224,6 +224,11 @@ if (!window_mouse_get_locked()) {
 	window_mouse_set_locked(true);
 }
 
+tick_containment_surge();
+if (phase != FPS_STATE_PLAYING || run_state != FPS_RUN_PLAYING) {
+	exit;
+}
+
 var _switch_index = -1;
 if (keyboard_check_pressed(ord("1"))) _switch_index = FPS_WEAPON_PULSE;
 if (keyboard_check_pressed(ord("2"))) _switch_index = FPS_WEAPON_SCATTER;

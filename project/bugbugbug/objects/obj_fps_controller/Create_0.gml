@@ -59,6 +59,8 @@ hit_marker_frames = 0;
 damage_flash_frames = 0;
 recoil = 0;
 dash = fps_dash_create_state();
+containment_surge = undefined;
+containment_surge_state = undefined;
 
 /// Owns desktop pointer capture so every state transition handles it the same way.
 set_mouse_capture = method(id, function(_captured) {
@@ -200,8 +202,52 @@ clear_room_instances = method(id, function() {
 	}
 });
 
+/// Selects and resets the hazard state for the current generated room.
+configure_containment_surge = method(id, function() {
+	containment_surge = fps_sector_containment_surge_for_tile(sector, run_room_index);
+	containment_surge_state = is_struct(containment_surge)
+		? fps_containment_surge_create_state(containment_surge.id)
+		: undefined;
+});
+
+/// Advances the current room hazard and applies its one exposed hit per cycle.
+tick_containment_surge = method(id, function() {
+	if (
+		run_state != FPS_RUN_PLAYING
+		|| phase != FPS_STATE_PLAYING
+		|| !run_started
+		|| !is_struct(containment_surge)
+		|| !is_struct(containment_surge_state)
+	) {
+		return;
+	}
+
+	var _previous_phase = containment_surge_state.phase;
+	containment_surge_state = fps_containment_surge_tick(containment_surge_state);
+	if (_previous_phase != containment_surge_state.phase) {
+		if (containment_surge_state.phase == FPS_CONTAINMENT_SURGE_WARNING) {
+			set_pickup_notice("CONTAINMENT SURGE // WARNING");
+		} else if (containment_surge_state.phase == FPS_CONTAINMENT_SURGE_ACTIVE) {
+			set_pickup_notice("CONTAINMENT SURGE // ACTIVE");
+		}
+	}
+
+	if (
+		!fps_containment_surge_can_damage(containment_surge_state)
+		|| !fps_sector_containment_surge_contains(containment_surge, x, y)
+		|| !fps_sector_containment_surge_exposed(sector, containment_surge, x, y)
+		|| fps_dash_blocks_damage(dash)
+	) {
+		return;
+	}
+
+	containment_surge_state = fps_containment_surge_mark_damaged(containment_surge_state);
+	take_damage(FPS_CONTAINMENT_SURGE_DAMAGE);
+});
+
 /// Creates only the encounter assigned to the current generated tile.
 spawn_room_encounter = method(id, function() {
+	configure_containment_surge();
 	var _tile = sector.tiles[run_room_index];
 	encounter_pressure = fps_run_room_pressure(sector, run_room_index, sector_seed);
 	encounter_plan = fps_run_create_room_plan(
@@ -353,6 +399,8 @@ finish_encounter = method(id, function(_terminal_phase) {
 show_title = method(id, function(_seed) {
 	clear_room_instances();
 	dash = fps_dash_create_state();
+	containment_surge = undefined;
+	containment_surge_state = undefined;
 	phase = FPS_STATE_PLAYING;
 	seed_input = string(fps_run_normalize_seed(_seed));
 	run_contract = fps_run_create_state(real(seed_input));

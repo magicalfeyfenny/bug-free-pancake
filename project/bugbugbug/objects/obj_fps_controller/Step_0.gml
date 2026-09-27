@@ -16,12 +16,12 @@ if (run_state == FPS_RUN_RESET_CONFIRM) {
 		profile_status = "PROFILE RESET COMPLETE";
 		max_health = fps_profile_starting_max_health(profile);
 		current_health = max_health;
-		run_contract = fps_run_create_state(real(seed_input));
+		run_contract = fps_run_create_state(real(seed_input), title_protocol);
 		sync_run_contract();
 		set_mouse_capture(false);
 	} else if (keyboard_check_pressed(vk_escape)) {
 		profile_reset_confirm = false;
-		run_contract = fps_run_create_state(real(seed_input));
+		run_contract = fps_run_create_state(real(seed_input), title_protocol);
 		sync_run_contract();
 		set_mouse_capture(false);
 	}
@@ -58,6 +58,12 @@ if (run_state == FPS_RUN_TITLE) {
 		seed_input = string(irandom_range(1, 999999999));
 		seed_editing = false;
 	}
+	if (keyboard_check_pressed(ord("P"))) {
+		var _next_protocol = title_protocol == FPS_RUN_PROTOCOL_STANDARD
+			? FPS_RUN_PROTOCOL_OVERCLOCK
+			: FPS_RUN_PROTOCOL_STANDARD;
+		select_title_protocol(_next_protocol);
+	}
 	if (seed_editing) {
 		if (keyboard_check_pressed(vk_backspace) && string_length(seed_input) > 0) {
 			seed_input = string_copy(seed_input, 1, string_length(seed_input) - 1);
@@ -76,7 +82,7 @@ if (run_state == FPS_RUN_TITLE) {
 	if (keyboard_check_pressed(vk_enter)) {
 		var _entered_seed = string_length(seed_input) > 0 ? real(seed_input) : FPS_SECTOR_DEFAULT_SEED;
 		seed_editing = false;
-		start_run(_entered_seed);
+		start_run(_entered_seed, title_protocol);
 	}
 	exit;
 }
@@ -130,7 +136,7 @@ if (run_state == FPS_RUN_REWARD) {
 
 if (run_state == FPS_RUN_SUMMARY) {
 	if (keyboard_check_pressed(vk_enter) || keyboard_check_pressed(ord("R"))) {
-		start_run(sector_seed);
+		start_run(sector_seed, run_contract.protocol);
 	} else if (keyboard_check_pressed(ord("N"))) {
 		show_title(irandom_range(1, 999999999));
 	} else if (keyboard_check_pressed(ord("A"))) {

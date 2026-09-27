@@ -76,6 +76,7 @@ draw_text(
 	"SECTOR " + string(max(0, _tile_index + 1)) + " / " + string(FPS_SECTOR_TILE_COUNT)
 		+ "   " + _tile_label
 		+ "   SEED " + string(sector_seed)
+		+ "   PROTOCOL " + fps_run_protocol_name(run_contract.protocol)
 		+ "   ARCHIVES " + string(_archive_count) + " / " + string(FPS_SECTOR_TILE_COUNT)
 		+ "   SCORE " + string(run_contract.score)
 );
@@ -319,13 +320,15 @@ if (run_state == FPS_RUN_TITLE || run_state == FPS_RUN_RESET_CONFIRM) {
 	draw_text(_center_x, 184, "ENTER  BEGIN RUN");
 	draw_text(_center_x, 216, "N  RANDOM SEED     S  EDIT SEED     A  ARCHIVE     C  CONTROLS");
 	draw_text(_center_x, 248, "X  RESET PROFILE");
+	draw_set_color(title_protocol == FPS_RUN_PROTOCOL_OVERCLOCK ? make_color_rgb(255, 226, 150) : c_white);
+	draw_text(_center_x, 280, "P  SWITCH PROTOCOL  //  " + fps_run_protocol_name(title_protocol));
 	draw_set_color(make_color_rgb(255, 226, 150));
-	draw_text(_center_x, 302, "SEED  " + seed_input + (seed_editing ? "_" : ""));
+	draw_text(_center_x, 318, "SEED  " + seed_input + (seed_editing ? "_" : ""));
 	draw_set_color(c_white);
-	draw_text(_center_x, 350, "RUNS " + string(profile.runs) + "   VICTORIES " + string(profile.victories));
-	draw_text(_center_x, 382, "ARCHIVES " + string(fps_profile_discovered_lore_count(profile)) + " / " + string(FPS_PROFILE_LORE_COUNT));
+	draw_text(_center_x, 366, "RUNS " + string(profile.runs) + "   VICTORIES " + string(profile.victories));
+	draw_text(_center_x, 398, "ARCHIVES " + string(fps_profile_discovered_lore_count(profile)) + " / " + string(FPS_PROFILE_LORE_COUNT));
 	draw_set_color(make_color_rgb(118, 224, 255));
-	draw_text(_center_x, 430, profile_status);
+	draw_text(_center_x, 446, profile_status);
 	if (run_state == FPS_RUN_RESET_CONFIRM) {
 		draw_set_alpha(0.9);
 		draw_set_color(c_black);
@@ -453,6 +456,7 @@ if (run_state == FPS_RUN_SUMMARY) {
 );
 	draw_text(_center_x, 260, "ARCHIVES THIS RUN " + string(fps_profile_discovered_lore_count(profile)) + " / " + string(FPS_PROFILE_LORE_COUNT));
 	draw_set_color(make_color_rgb(184, 199, 216));
+	draw_text(_center_x, 292, "PROTOCOL " + fps_run_protocol_name(run_contract.protocol));
 	draw_text(_center_x, 344, "ENTER / R  RESTART SEED     N  TITLE WITH NEW SEED     A  ARCHIVE");
 }
 

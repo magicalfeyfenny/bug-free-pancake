@@ -7,6 +7,9 @@
 #macro FPS_RUN_PAUSED 6
 #macro FPS_RUN_SETTINGS 7
 
+#macro FPS_RUN_PROTOCOL_STANDARD 0
+#macro FPS_RUN_PROTOCOL_OVERCLOCK 1
+
 #macro FPS_RUN_REWARD_REPAIR 0
 #macro FPS_RUN_REWARD_AMMO 1
 #macro FPS_RUN_REWARD_OVERCHARGE 2
@@ -33,10 +36,32 @@ function fps_run_normalize_seed(_seed) {
 	return _normalized <= 0 ? FPS_SECTOR_DEFAULT_SEED : _normalized;
 }
 
+/// Keeps run selection within the two supported challenge protocols.
+function fps_run_normalize_protocol(_protocol) {
+	return _protocol == FPS_RUN_PROTOCOL_OVERCLOCK
+		? FPS_RUN_PROTOCOL_OVERCLOCK
+		: FPS_RUN_PROTOCOL_STANDARD;
+}
+
+/// Returns the player-facing name for a selected challenge protocol.
+function fps_run_protocol_name(_protocol) {
+	return fps_run_normalize_protocol(_protocol) == FPS_RUN_PROTOCOL_OVERCLOCK
+		? "OVERCLOCK"
+		: "STANDARD";
+}
+
+/// Applies the protocol multiplier at the existing enemy and room award boundaries.
+function fps_run_score_points(_state, _base_points) {
+	return _state.protocol == FPS_RUN_PROTOCOL_OVERCLOCK
+		? _base_points * 1.5
+		: _base_points;
+}
+
 /// Creates the explicit run state used by the title, encounter, reward, and summary flows.
-function fps_run_create_state(_seed) {
+function fps_run_create_state(_seed, _protocol = FPS_RUN_PROTOCOL_STANDARD) {
 	return {
 		seed: fps_run_normalize_seed(_seed),
+		protocol: fps_run_normalize_protocol(_protocol),
 		phase: FPS_RUN_TITLE,
 		room_index: 0,
 		room_count: FPS_SECTOR_TILE_COUNT,
@@ -52,8 +77,8 @@ function fps_run_create_state(_seed) {
 }
 
 /// Starts a clean run while preserving only the selected seed and profile state outside it.
-function fps_run_begin(_seed) {
-	var _state = fps_run_create_state(_seed);
+function fps_run_begin(_seed, _protocol = FPS_RUN_PROTOCOL_STANDARD) {
+	var _state = fps_run_create_state(_seed, _protocol);
 	_state.phase = FPS_RUN_PLAYING;
 	_state.room_complete = true;
 	return _state;
@@ -100,7 +125,7 @@ function fps_run_award_enemy(_state, _kind, _room_id, _socket_id) {
 		return {awarded: false, points: 0};
 	}
 
-	var _points = fps_run_enemy_score(_kind);
+	var _points = fps_run_score_points(_state, fps_run_enemy_score(_kind));
 	if (_points <= 0) {
 		return {awarded: false, points: 0};
 	}
@@ -117,7 +142,7 @@ function fps_run_award_room(_state, _room_id, _is_finale) {
 		return {awarded: false, points: 0};
 	}
 
-	var _points = fps_run_room_score(_is_finale);
+	var _points = fps_run_score_points(_state, fps_run_room_score(_is_finale));
 	array_push(_state.room_score_awards, _award_id);
 	_state.score += _points;
 	return {awarded: true, points: _points};

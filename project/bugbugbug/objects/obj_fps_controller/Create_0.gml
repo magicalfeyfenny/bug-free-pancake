@@ -160,6 +160,33 @@ award_room_score = method(id, function(_is_finale) {
 	return _award.awarded;
 });
 
+/// Collects only a nearby run fragment and leaves profile data untouched.
+collect_signal_fragment = method(id, function(_fragment_index) {
+	if (
+		!run_started
+		|| run_state != FPS_RUN_PLAYING
+		|| phase != FPS_STATE_PLAYING
+		|| _fragment_index < 0
+		|| _fragment_index >= array_length(sector.signal_fragment_sockets)
+	) {
+		return false;
+	}
+
+	var _fragment = sector.signal_fragment_sockets[_fragment_index];
+	if (point_distance(x, y, _fragment.x, _fragment.y) > FPS_WEAPON_PICKUP_RANGE) {
+		return false;
+	}
+
+	var _result = fps_run_collect_signal_fragment(run_contract, _fragment.id);
+	if (!_result.collected) {
+		return false;
+	}
+
+	sync_run_contract();
+	set_pickup_notice("SIGNAL FRAGMENT COLLECTED // +" + string(_result.points) + " POINTS");
+	return true;
+});
+
 /// Pauses the active run and releases pointer capture without changing gameplay state.
 pause_run = method(id, function() {
 	if (run_state != FPS_RUN_PLAYING || phase != FPS_STATE_PLAYING || !run_started) {
@@ -514,3 +541,4 @@ pickup_meshes = [];
 for (var _pickup_kind = 0; _pickup_kind < FPS_PICKUP_COUNT; _pickup_kind += 1) {
 	array_push(pickup_meshes, fps_build_unit_box_buffer(geometry_format, fps_weapon_pickup_colour(_pickup_kind)));
 }
+signal_fragment_buffer = fps_build_unit_box_buffer(geometry_format, make_color_rgb(102, 255, 225));

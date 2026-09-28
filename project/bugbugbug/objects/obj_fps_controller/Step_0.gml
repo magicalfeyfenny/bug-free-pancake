@@ -159,6 +159,17 @@ if (lore_open) {
 }
 
 if (keyboard_check_pressed(ord("E"))) {
+	var _near_fragment = fps_sector_near_signal_fragment(
+		sector,
+		run_contract.signal_fragments_collected,
+		x,
+		y,
+		FPS_WEAPON_PICKUP_RANGE
+	);
+	if (_near_fragment >= 0 && collect_signal_fragment(_near_fragment)) {
+		exit;
+	}
+
 	var _near_lore = fps_sector_near_lore(sector, x, y, FPS_WEAPON_PICKUP_RANGE);
 	if (_near_lore >= 0) {
 		lore_index = _near_lore;

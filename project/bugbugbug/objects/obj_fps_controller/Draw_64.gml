@@ -77,6 +77,7 @@ draw_text(
 		+ "   " + _tile_label
 		+ "   SEED " + string(sector_seed)
 		+ "   ARCHIVES " + string(_archive_count) + " / " + string(FPS_SECTOR_TILE_COUNT)
+		+ "   SIGNAL FRAGMENTS " + string(array_length(run_contract.signal_fragments_collected)) + " / " + string(FPS_SECTOR_SIGNAL_FRAGMENT_COUNT)
 		+ "   SCORE " + string(run_contract.score)
 );
 
@@ -286,6 +287,23 @@ if (phase == FPS_STATE_PLAYING && run_state == FPS_RUN_PLAYING && !lore_open) {
 		draw_set_valign(fa_middle);
 		draw_text(_center_x, _center_y + 92, "PRESS E TO READ ARCHIVE " + string(_near_lore + 1));
 	}
+
+	var _near_fragment = fps_sector_near_signal_fragment(
+		sector,
+		run_contract.signal_fragments_collected,
+		x,
+		y,
+		FPS_WEAPON_PICKUP_RANGE
+	);
+	if (_near_fragment >= 0) {
+		draw_set_alpha(0.78);
+		draw_set_color(c_black);
+		draw_rectangle(_center_x - 220, _center_y + 120, _center_x + 220, _center_y + 160, false);
+		draw_set_alpha(1);
+		draw_set_color(make_color_rgb(102, 255, 225));
+		draw_set_valign(fa_middle);
+		draw_text(_center_x, _center_y + 140, "PRESS E TO COLLECT SIGNAL FRAGMENT");
+	}
 }
 
 if (lore_open && phase == FPS_STATE_PLAYING && lore_index >= 0) {
@@ -451,7 +469,13 @@ if (run_state == FPS_RUN_SUMMARY) {
 			+ "   ROOMS CLEARED " + string(run_contract.rooms_cleared)
 			+ "   SCORE " + string(run_contract.score)
 );
-	draw_text(_center_x, 260, "ARCHIVES THIS RUN " + string(fps_profile_discovered_lore_count(profile)) + " / " + string(FPS_PROFILE_LORE_COUNT));
+	draw_text(
+		_center_x,
+		260,
+		"SIGNAL FRAGMENTS " + string(array_length(run_contract.signal_fragments_collected))
+			+ " / " + string(FPS_SECTOR_SIGNAL_FRAGMENT_COUNT)
+	);
+	draw_text(_center_x, 288, "ARCHIVES THIS RUN " + string(fps_profile_discovered_lore_count(profile)) + " / " + string(FPS_PROFILE_LORE_COUNT));
 	draw_set_color(make_color_rgb(184, 199, 216));
 	draw_text(_center_x, 344, "ENTER / R  RESTART SEED     N  TITLE WITH NEW SEED     A  ARCHIVE");
 }

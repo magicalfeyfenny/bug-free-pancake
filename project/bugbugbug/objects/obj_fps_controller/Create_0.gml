@@ -187,6 +187,18 @@ collect_signal_fragment = method(id, function(_fragment_index) {
 	return true;
 });
 
+/// Builds the fragment and score labels shared by the active HUD and run summary.
+signal_fragment_display_values = method(id, function() {
+	var _fragment_count = array_length(run_contract.signal_fragments_collected);
+	return {
+		fragment_count: _fragment_count,
+		score: run_contract.score,
+		counter_text: "SIGNAL FRAGMENTS "
+			+ string(_fragment_count) + " / " + string(FPS_SECTOR_SIGNAL_FRAGMENT_COUNT),
+		score_text: "SCORE " + string(run_contract.score),
+	};
+});
+
 /// Pauses the active run and releases pointer capture without changing gameplay state.
 pause_run = method(id, function() {
 	if (run_state != FPS_RUN_PLAYING || phase != FPS_STATE_PLAYING || !run_started) {

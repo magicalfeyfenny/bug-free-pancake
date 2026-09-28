@@ -2,6 +2,7 @@ var _gui_width = display_get_gui_width();
 var _gui_height = display_get_gui_height();
 var _center_x = _gui_width * 0.5;
 var _center_y = _gui_height * 0.5;
+var _signal_fragment_display = signal_fragment_display_values();
 
 draw_set_font(-1);
 draw_set_halign(fa_left);
@@ -77,8 +78,8 @@ draw_text(
 		+ "   " + _tile_label
 		+ "   SEED " + string(sector_seed)
 		+ "   ARCHIVES " + string(_archive_count) + " / " + string(FPS_SECTOR_TILE_COUNT)
-		+ "   SIGNAL FRAGMENTS " + string(array_length(run_contract.signal_fragments_collected)) + " / " + string(FPS_SECTOR_SIGNAL_FRAGMENT_COUNT)
-		+ "   SCORE " + string(run_contract.score)
+		+ "   " + _signal_fragment_display.counter_text
+		+ "   " + _signal_fragment_display.score_text
 );
 
 if (run_state == FPS_RUN_PLAYING) {
@@ -467,14 +468,13 @@ if (run_state == FPS_RUN_SUMMARY) {
 		228,
 		"SEED " + string(sector_seed)
 			+ "   ROOMS CLEARED " + string(run_contract.rooms_cleared)
-			+ "   SCORE " + string(run_contract.score)
+			+ "   " + _signal_fragment_display.score_text
 );
-	draw_text(
-		_center_x,
-		260,
-		"SIGNAL FRAGMENTS " + string(array_length(run_contract.signal_fragments_collected))
-			+ " / " + string(FPS_SECTOR_SIGNAL_FRAGMENT_COUNT)
-	);
+draw_text(
+	_center_x,
+	260,
+	_signal_fragment_display.counter_text
+);
 	draw_text(_center_x, 288, "ARCHIVES THIS RUN " + string(fps_profile_discovered_lore_count(profile)) + " / " + string(FPS_PROFILE_LORE_COUNT));
 	draw_set_color(make_color_rgb(184, 199, 216));
 	draw_text(_center_x, 344, "ENTER / R  RESTART SEED     N  TITLE WITH NEW SEED     A  ARCHIVE");

@@ -137,3 +137,35 @@ suite(function() {
 		});
 	});
 });
+
+suite(function() {
+	describe("Signal fragment HUD and summary values", function() {
+		it("shows partial and full run counts with the resulting score", function() {
+			var _controller = instance_find(obj_fps_controller, 0);
+			var _previous_contract = _controller.run_contract;
+			var _partial_state = fps_run_begin(24681);
+			fps_run_collect_signal_fragment(_partial_state, "signal-fragment-display-3");
+			_controller.run_contract = _partial_state;
+
+			var _partial_display = _controller.signal_fragment_display_values();
+			expect(_partial_display.fragment_count).toBe(1);
+			expect(_partial_display.score).toBe(FPS_RUN_SCORE_SIGNAL_FRAGMENT);
+			expect(_partial_display.counter_text).toBe("SIGNAL FRAGMENTS 1 / 3");
+			expect(_partial_display.score_text).toBe("SCORE 75");
+
+			var _full_state = fps_run_begin(24682);
+			fps_run_collect_signal_fragment(_full_state, "signal-fragment-display-3");
+			fps_run_collect_signal_fragment(_full_state, "signal-fragment-display-4");
+			fps_run_collect_signal_fragment(_full_state, "signal-fragment-display-5");
+			_controller.run_contract = _full_state;
+
+			var _full_display = _controller.signal_fragment_display_values();
+			expect(_full_display.fragment_count).toBe(FPS_SECTOR_SIGNAL_FRAGMENT_COUNT);
+			expect(_full_display.score).toBe(FPS_RUN_SCORE_SIGNAL_FRAGMENT * FPS_SECTOR_SIGNAL_FRAGMENT_COUNT);
+			expect(_full_display.counter_text).toBe("SIGNAL FRAGMENTS 3 / 3");
+			expect(_full_display.score_text).toBe("SCORE 225");
+
+			_controller.run_contract = _previous_contract;
+		});
+	});
+});

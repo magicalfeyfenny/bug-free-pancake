@@ -92,12 +92,30 @@ class FpsSignalFragmentTests(unittest.TestCase):
 
         self.assertIn("signal_fragment_buffer", self.world_draw)
         self.assertIn("run_contract.signal_fragments_collected", self.world_draw)
-        self.assertIn('"   SIGNAL FRAGMENTS "', self.hud_draw)
-        self.assertIn('"SIGNAL FRAGMENTS "', self.hud_draw)
+        self.assertIn("_signal_fragment_display.counter_text", self.hud_draw)
+        self.assertIn("_signal_fragment_display.score_text", self.hud_draw)
         self.assertIn('"PRESS E TO COLLECT SIGNAL FRAGMENT"', self.hud_draw)
         self.assertIn('"name":"fps_signal_fragment_tests"', self.project)
         self.assertIn("collects from its tile before and after room clear", self.fragment_tests)
         self.assertIn("places three clear, stable sockets away from archives and supplies", self.fragment_tests)
+
+    def test_hud_and_summary_use_tested_partial_and_full_display_values(self):
+        """The rendered HUD and terminal summary share the tested run labels."""
+        display_start = self.controller.index(
+            "signal_fragment_display_values = method(id, function() {"
+        )
+        display_end = self.controller.index("\n});", display_start) + len("\n});")
+        display_method = self.controller[display_start:display_end]
+
+        self.assertIn("array_length(run_contract.signal_fragments_collected)", display_method)
+        self.assertIn("string(run_contract.score)", display_method)
+        self.assertIn("_signal_fragment_display = signal_fragment_display_values()", self.hud_draw)
+        self.assertEqual(self.hud_draw.count("_signal_fragment_display.counter_text"), 2)
+        self.assertEqual(self.hud_draw.count("_signal_fragment_display.score_text"), 2)
+        self.assertIn('"SIGNAL FRAGMENTS 1 / 3"', self.fragment_tests)
+        self.assertIn('"SCORE 75"', self.fragment_tests)
+        self.assertIn('"SIGNAL FRAGMENTS 3 / 3"', self.fragment_tests)
+        self.assertIn('"SCORE 225"', self.fragment_tests)
 
 
 if __name__ == "__main__":

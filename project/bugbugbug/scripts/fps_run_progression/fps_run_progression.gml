@@ -22,6 +22,7 @@
 #macro FPS_RUN_SCORE_TITAN 500
 #macro FPS_RUN_SCORE_ROOM_CLEAR 250
 #macro FPS_RUN_SCORE_FINALE_CLEAR 1000
+#macro FPS_RUN_SCORE_SIGNAL_FRAGMENT 75
 
 /// Normalizes seed entry without allowing zero to create a broken generator state.
 function fps_run_normalize_seed(_seed) {
@@ -45,6 +46,7 @@ function fps_run_create_state(_seed) {
 		score: 0,
 		enemy_score_awards: [],
 		room_score_awards: [],
+		signal_fragments_collected: [],
 		reward_choices: [],
 		reward_selection: -1,
 		terminal_phase: FPS_STATE_PLAYING,
@@ -91,6 +93,28 @@ function fps_run_has_score_award(_awards, _award_id) {
 	}
 
 	return false;
+}
+
+/// Collects one run fragment and awards its fixed score once per stable socket ID.
+function fps_run_collect_signal_fragment(_state, _fragment_id) {
+	if (
+		string_length(_fragment_id) <= 0
+		|| fps_run_has_score_award(_state.signal_fragments_collected, _fragment_id)
+	) {
+		return {
+			collected: false,
+			points: 0,
+			count: array_length(_state.signal_fragments_collected),
+		};
+	}
+
+	array_push(_state.signal_fragments_collected, _fragment_id);
+	_state.score += FPS_RUN_SCORE_SIGNAL_FRAGMENT;
+	return {
+		collected: true,
+		points: FPS_RUN_SCORE_SIGNAL_FRAGMENT,
+		count: array_length(_state.signal_fragments_collected),
+	};
 }
 
 /// Adds one role-based enemy award while rejecting a duplicate stable socket identity.

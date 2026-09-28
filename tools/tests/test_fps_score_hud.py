@@ -45,20 +45,30 @@ class FpsScoreHudStructureTests(unittest.TestCase):
 
     def test_hud_and_summary_read_score_from_run_contract(self):
         """Both active and terminal displays use the run contract score."""
-        self.assertGreaterEqual(self.draw_event.count("run_contract.score"), 2)
+        display_start = self.controller.index(
+            "signal_fragment_display_values = method(id, function() {"
+        )
+        display_end = self.controller.index("\n});", display_start) + len("\n});")
+        display_method = self.controller[display_start:display_end]
+
+        self.assertIn("run_contract.score", display_method)
+        self.assertEqual(self.draw_event.count("_signal_fragment_display.score_text"), 2)
 
         summary_start = self.draw_event.index("if (run_state == FPS_RUN_SUMMARY)")
         summary_end = self.draw_event.index("if (", summary_start + 1)
         summary_block = self.draw_event[summary_start:summary_end]
         self.assertRegex(summary_block, r"run_contract\.rooms_cleared")
-        self.assertRegex(summary_block, r"run_contract\.score")
+        self.assertRegex(summary_block, r"_signal_fragment_display\.score_text")
         self.assertRegex(
             summary_block,
-            r'"SEED "[\s\S]*run_contract\.rooms_cleared[\s\S]*run_contract\.score',
+            r'"SEED "[\s\S]*run_contract\.rooms_cleared[\s\S]*_signal_fragment_display\.score_text',
         )
 
         route_start = self.draw_event.index("if (run_state == FPS_RUN_PLAYING)")
-        self.assertLess(self.draw_event.index("run_contract.score"), route_start)
+        self.assertLess(
+            self.draw_event.index("_signal_fragment_display.score_text"),
+            route_start,
+        )
 
 
 if __name__ == "__main__":

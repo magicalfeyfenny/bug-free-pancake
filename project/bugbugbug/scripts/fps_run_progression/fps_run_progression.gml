@@ -13,6 +13,7 @@
 #macro FPS_RUN_REWARD_WEAPON 3
 #macro FPS_RUN_REWARD_ARCHIVE 4
 #macro FPS_RUN_REWARD_VITALS 5
+#macro FPS_RUN_REWARD_CALIBRATION 6
 #macro FPS_RUN_REWARD_LIMIT 3
 
 #macro FPS_RUN_SCORE_CHASER 100
@@ -292,13 +293,20 @@ function fps_run_create_room_plan(_sector, _seed, _room_index, _pressure) {
 	};
 }
 
-/// Creates the base and profile-expanded reward pool in stable identity order.
-function fps_run_reward_pool(_profile) {
+/// Builds available run and profile reward cards in stable identity order.
+function fps_run_reward_pool(_profile, _loadout) {
 	var _pool = [
 		{kind: FPS_RUN_REWARD_REPAIR, label: "REPAIR", description: "Restore 35 vital points."},
 		{kind: FPS_RUN_REWARD_AMMO, label: "AMMO CELL", description: "Refill the equipped weapon reserve."},
 		{kind: FPS_RUN_REWARD_OVERCHARGE, label: "OVERCHARGE", description: "Power the next 15 seconds of fire."},
 	];
+	if (fps_weapon_calibration_available(_loadout)) {
+		array_push(_pool, {
+			kind: FPS_RUN_REWARD_CALIBRATION,
+			label: "CALIBRATION",
+			description: "Calibrate the equipped weapon for 10% more damage this run.",
+		});
+	}
 	if (fps_profile_has_unlock(_profile, FPS_PROFILE_UNLOCK_RAIL)) {
 		array_push(_pool, {
 			kind: FPS_RUN_REWARD_WEAPON,
@@ -325,9 +333,9 @@ function fps_run_reward_pool(_profile) {
 	return _pool;
 }
 
-/// Selects three reproducible choices from the current profile-expanded pool.
-function fps_run_create_reward_choices(_seed, _room_index, _profile) {
-	var _pool = fps_run_reward_pool(_profile);
+/// Selects three reproducible choices from the current profile and loadout state.
+function fps_run_create_reward_choices(_seed, _room_index, _profile, _loadout) {
+	var _pool = fps_run_reward_pool(_profile, _loadout);
 	var _random_state = fps_sector_next_seed(_seed + 104729 * (_room_index + 1));
 	var _choices = [];
 	while (array_length(_choices) < min(FPS_RUN_REWARD_LIMIT, array_length(_pool))) {
@@ -381,6 +389,13 @@ function fps_run_apply_reward(_choice, _loadout, _current_health, _max_health, _
 			_loadout.overcharge_frames = FPS_WEAPON_OVERCHARGE_GAIN;
 			_result.message = "OVERCHARGE ONLINE";
 			break;
+		case FPS_RUN_REWARD_CALIBRATION:
+			if (fps_weapon_calibrate_current(_loadout)) {
+				_result.message = "CALIBRATED " + fps_weapon_current_definition(_loadout).label;
+			} else {
+				_result.message = "CALIBRATION ALREADY USED";
+			}
+			break;
 		case FPS_RUN_REWARD_WEAPON:
 			var _weapon_id = _choice.weapon_id;
 			var _weapon_state = _loadout.states[_weapon_id];
@@ -413,6 +428,7 @@ function fps_run_reward_kind_name(_kind) {
 		case FPS_RUN_REWARD_WEAPON: return "WEAPON";
 		case FPS_RUN_REWARD_ARCHIVE: return "ARCHIVE ECHO";
 		case FPS_RUN_REWARD_VITALS: return "VITAL BUFFER";
+		case FPS_RUN_REWARD_CALIBRATION: return "CALIBRATION";
 	}
 
 	return "UNKNOWN REWARD";

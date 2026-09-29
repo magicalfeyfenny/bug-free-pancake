@@ -344,7 +344,7 @@ begin_reward = method(id, function() {
 	}
 
 	award_room_score(false);
-	var _choices = fps_run_create_reward_choices(sector_seed, run_room_index, profile);
+	var _choices = fps_run_create_reward_choices(sector_seed, run_room_index, profile, loadout);
 	run_contract = fps_run_begin_reward(run_contract, _choices);
 	sync_run_contract();
 	set_mouse_capture(false);

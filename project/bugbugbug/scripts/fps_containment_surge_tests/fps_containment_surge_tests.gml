@@ -86,25 +86,34 @@ suite(function() {
 			var _previous_surge_state = _controller.containment_surge_state;
 			var _previous_dash = _controller.dash;
 			var _sector = fps_sector_generate(13579, 1366, 768, 24, 200);
+			var _combat_tile_index = -1;
+			var _safe_tile_index = -1;
 
-			expect(_sector.tiles[2].role).toBe(FPS_SECTOR_ROLE_COMBAT);
-			expect(_sector.tiles[3].role).toBe(FPS_SECTOR_ROLE_SAFE);
+			for (var _tile_index = 0; _tile_index < array_length(_sector.tiles); _tile_index += 1) {
+				if (_sector.tiles[_tile_index].role == FPS_SECTOR_ROLE_COMBAT) {
+					_combat_tile_index = _tile_index;
+				} else if (_sector.tiles[_tile_index].role == FPS_SECTOR_ROLE_REWARD) {
+					_safe_tile_index = _tile_index;
+				}
+			}
+			expect(_combat_tile_index >= 0).toBeTruthy();
+			expect(_safe_tile_index >= 0).toBeTruthy();
 
 			_controller.sector = _sector;
 			_controller.sector_seed = 13579;
 			_controller.run_contract = fps_run_begin(13579);
-			_controller.run_contract.room_index = 2;
+			_controller.run_contract.room_index = _combat_tile_index;
 			_controller.run_contract.room_complete = false;
 			_controller.sync_run_contract();
 			_controller.phase = FPS_STATE_PLAYING;
 			_controller.run_started = true;
-			_controller.x = _sector.tiles[2].center_x + 200;
-			_controller.y = _sector.tiles[2].center_y + 200;
+			_controller.x = _sector.tiles[_combat_tile_index].center_x + 200;
+			_controller.y = _sector.tiles[_combat_tile_index].center_y + 200;
 			_controller.configure_containment_surge();
 
 			var _combat_surge = _controller.containment_surge;
 			expect(is_struct(_combat_surge)).toBeTruthy();
-			expect(_combat_surge.id).toBe("containment-surge-3");
+			expect(_combat_surge.id).toBe("containment-surge-" + string(_combat_tile_index + 1));
 			expect(_controller.containment_surge_state.phase).toBe(FPS_CONTAINMENT_SURGE_IDLE);
 
 			for (var _idle_frame = 0; _idle_frame < FPS_CONTAINMENT_SURGE_IDLE_FRAMES; _idle_frame += 1) {
@@ -128,8 +137,22 @@ suite(function() {
 			expect(_controller.containment_surge_state.phase).toBe(FPS_CONTAINMENT_SURGE_IDLE);
 			expect(_controller.containment_surge_state.cycle_index).toBe(0);
 
+			// A completed room must stop the live controller timer before another phase begins.
+			var _completed_state = fps_containment_surge_create_state(_combat_surge.id);
+			_completed_state.phase = FPS_CONTAINMENT_SURGE_WARNING;
+			_completed_state.phase_frames = 1;
+			_controller.containment_surge_state = _completed_state;
+			_controller.run_contract.room_complete = true;
+			_controller.sync_run_contract();
+			var _completed_health = _controller.current_health;
+			_controller.tick_containment_surge();
+			expect(_controller.room_complete).toBeTruthy();
+			expect(_controller.containment_surge_state.phase).toBe(FPS_CONTAINMENT_SURGE_WARNING);
+			expect(_controller.containment_surge_state.phase_frames).toBe(1);
+			expect(_controller.current_health).toBe(_completed_health);
+
 			// Room entry uses this same encounter setup path; non-combat rooms have no HUD field.
-			_controller.run_contract.room_index = 3;
+			_controller.run_contract.room_index = _safe_tile_index;
 			_controller.run_contract.room_complete = false;
 			_controller.sync_run_contract();
 			_controller.spawn_room_encounter();

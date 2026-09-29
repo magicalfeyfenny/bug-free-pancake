@@ -124,15 +124,16 @@ if (run_state == FPS_RUN_PLAYING) {
 		var _route_entry = _route_entries[_route_index];
 		var _card_left = _route_left + _route_index * (_route_card_width + _route_gap);
 		var _card_right = _card_left + _route_card_width;
-		var _marker_colour = _route_entry.is_current
-			? make_color_rgb(255, 226, 150)
-			: _route_entry.is_next
-				? make_color_rgb(118, 224, 255)
-				: _route_entry.is_finale
-					? make_color_rgb(189, 120, 255)
-					: _route_entry.is_cleared
-						? make_color_rgb(98, 255, 176)
-						: make_color_rgb(103, 118, 136);
+		var _marker_colour = make_color_rgb(103, 118, 136);
+		if (_route_entry.is_current) {
+			_marker_colour = make_color_rgb(255, 226, 150);
+		} else if (_route_entry.is_next) {
+			_marker_colour = make_color_rgb(118, 224, 255);
+		} else if (_route_entry.is_finale) {
+			_marker_colour = make_color_rgb(189, 120, 255);
+		} else if (_route_entry.is_cleared) {
+			_marker_colour = make_color_rgb(98, 255, 176);
+		}
 
 		draw_set_color(make_color_rgb(14, 29, 43));
 		draw_rectangle(_card_left, _route_top, _card_right, _route_top + 52, false);

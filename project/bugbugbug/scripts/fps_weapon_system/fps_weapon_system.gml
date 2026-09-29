@@ -14,6 +14,7 @@
 #macro FPS_WEAPON_AMMO_PICKUP 18
 #macro FPS_WEAPON_OVERCHARGE_GAIN 360
 #macro FPS_WEAPON_OVERCHARGE_MAX 900
+#macro FPS_WEAPON_CALIBRATION_MULTIPLIER 1.1
 
 /// Returns the authored contract for one usable weapon archetype.
 function fps_weapon_definition(_weapon_id) {
@@ -99,6 +100,7 @@ function fps_weapon_create_state(_weapon_id, _owned) {
 		owned: _owned,
 		magazine: _owned ? _definition.magazine_size : 0,
 		reserve: _owned ? _definition.initial_reserve : 0,
+		calibrated: false,
 	};
 }
 
@@ -125,6 +127,28 @@ function fps_weapon_current_definition(_loadout) {
 /// Returns the mutable state for the currently equipped weapon.
 function fps_weapon_current_state(_loadout) {
 	return _loadout.states[_loadout.current_index];
+}
+
+/// Reports whether this run still has its one calibration reward available.
+function fps_weapon_calibration_available(_loadout) {
+	for (var _state_index = 0; _state_index < array_length(_loadout.states); _state_index += 1) {
+		if (_loadout.states[_state_index].calibrated) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/// Calibrates the equipped weapon once without changing its authored definition.
+function fps_weapon_calibrate_current(_loadout) {
+	if (!fps_weapon_calibration_available(_loadout)) {
+		return false;
+	}
+
+	var _state = fps_weapon_current_state(_loadout);
+	_state.calibrated = true;
+	return true;
 }
 
 /// Counts acquired weapons for readable progression feedback.
@@ -209,6 +233,9 @@ function fps_weapon_start_shot(_loadout) {
 	var _damage = _definition.damage;
 	if (_loadout.overcharge_frames > 0) {
 		_damage = ceil(_damage * 1.5);
+	}
+	if (_state.calibrated) {
+		_damage *= FPS_WEAPON_CALIBRATION_MULTIPLIER;
 	}
 
 	return {

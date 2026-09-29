@@ -87,7 +87,7 @@ suite(function() {
 			fps_profile_discover_lore(_profile, "archive-breach");
 			_profile = fps_profile_record_run_finished(_profile, true);
 			expect(fps_profile_has_unlock(_profile, FPS_PROFILE_UNLOCK_ARCHIVE)).toBeTruthy();
-			expect(array_length(fps_run_reward_pool(_profile)) > 3).toBeTruthy();
+			expect(array_length(fps_run_reward_pool(_profile, fps_weapon_create_loadout())) > 3).toBeTruthy();
 			expect(fps_profile_has_unlock(fps_profile_reset_data(), FPS_PROFILE_UNLOCK_RAIL)).toBeFalsy();
 		});
 	});

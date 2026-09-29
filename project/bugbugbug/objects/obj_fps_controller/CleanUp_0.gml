@@ -17,4 +17,5 @@ var _pickup_mesh_count = array_length(pickup_meshes);
 for (var _pickup_mesh_index = 0; _pickup_mesh_index < _pickup_mesh_count; _pickup_mesh_index += 1) {
 	vertex_delete_buffer(pickup_meshes[_pickup_mesh_index]);
 }
+vertex_delete_buffer(signal_fragment_buffer);
 vertex_format_delete(geometry_format);

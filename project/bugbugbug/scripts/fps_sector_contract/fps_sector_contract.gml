@@ -7,6 +7,8 @@
 
 #macro FPS_SECTOR_TILE_COUNT 6
 #macro FPS_SECTOR_TILE_VARIANT_COUNT 3
+#macro FPS_SECTOR_SIGNAL_FRAGMENT_COUNT 3
+#macro FPS_SECTOR_SIGNAL_FRAGMENT_RADIUS 14
 #macro FPS_SECTOR_DEFAULT_SEED 20260905
 #macro FPS_SECTOR_SEED_MODULUS 2147483647
 #macro FPS_SECTOR_DOOR_HALF_HEIGHT 112
@@ -341,8 +343,8 @@ function fps_sector_make_containment_surge(_sector, _tile) {
 	};
 }
 
-/// Keeps enemy sockets clear of solids and every previously declared socket.
-function fps_sector_enemy_socket_is_available(_sector, _x, _y, _radius) {
+/// Keeps generated sockets clear of solids and every previously declared socket.
+function fps_sector_socket_position_is_available(_sector, _x, _y, _radius) {
 	if (!fps_sector_position_is_clear(_sector, _x, _y, _radius)) {
 		return false;
 	}
@@ -356,6 +358,48 @@ function fps_sector_enemy_socket_is_available(_sector, _x, _y, _radius) {
 	}
 
 	return true;
+}
+
+/// Adds one run fragment to each of the three shuffled middle tiles.
+function fps_sector_add_signal_fragment_sockets(_sector) {
+	for (
+		var _tile_index = 2;
+		_tile_index < FPS_SECTOR_TILE_COUNT - 1;
+		_tile_index += 1
+	) {
+		var _tile = _sector.tiles[_tile_index];
+		var _candidates = [
+			[_tile.center_x, _tile.center_y],
+			[_tile.center_x - 20, _tile.center_y],
+			[_tile.center_x + 20, _tile.center_y],
+		];
+		var _candidate_count = array_length(_candidates);
+		for (var _candidate_index = 0; _candidate_index < _candidate_count; _candidate_index += 1) {
+			var _candidate = _candidates[_candidate_index];
+			if (!fps_sector_socket_position_is_available(
+				_sector,
+				_candidate[0],
+				_candidate[1],
+				FPS_SECTOR_SIGNAL_FRAGMENT_RADIUS
+			)) {
+				continue;
+			}
+
+			var _fragment = fps_sector_make_socket(
+				"signal-fragment-" + _tile.id,
+				"signal-fragment",
+				_tile.role,
+				_tile_index,
+				_candidate[0],
+				_candidate[1],
+				FPS_SECTOR_SIGNAL_FRAGMENT_RADIUS,
+				-1
+			);
+			array_push(_sector.signal_fragment_sockets, _fragment);
+			array_push(_sector.sockets, _fragment);
+			break;
+		}
+	}
 }
 
 /// Adds deterministic enemy sockets to combat and finale tiles only.
@@ -380,7 +424,7 @@ function fps_sector_add_enemy_sockets(_sector, _tile) {
 		var _candidate_count = array_length(_candidate_set);
 		for (var _point_index = 0; _point_index < _candidate_count; _point_index += 1) {
 			var _candidate = _candidate_set[_point_index];
-			if (!fps_sector_enemy_socket_is_available(_sector, _candidate[0], _candidate[1], _socket_radius)) {
+			if (!fps_sector_socket_position_is_available(_sector, _candidate[0], _candidate[1], _socket_radius)) {
 				continue;
 			}
 
@@ -498,6 +542,7 @@ function fps_sector_generate(_seed, _width, _height, _wall_thickness, _wall_heig
 		exit_socket: undefined,
 		combat_sockets: [],
 		containment_surges: [],
+		signal_fragment_sockets: [],
 	};
 
 	for (var _socket_tile_index = 0; _socket_tile_index < FPS_SECTOR_TILE_COUNT; _socket_tile_index += 1) {
@@ -553,6 +598,8 @@ function fps_sector_generate(_seed, _width, _height, _wall_thickness, _wall_heig
 			array_push(_sector.sockets, _sector.exit_socket);
 		}
 	}
+
+	fps_sector_add_signal_fragment_sockets(_sector);
 
 	return _sector;
 }
@@ -654,6 +701,34 @@ function fps_sector_near_lore(_sector, _x, _y, _range) {
 	}
 
 	return _nearest_entry;
+}
+
+/// Finds the nearest uncollected signal fragment within interaction range.
+function fps_sector_near_signal_fragment(_sector, _collected_ids, _x, _y, _range) {
+	var _nearest_index = -1;
+	var _nearest_distance = _range + 1;
+	var _fragment_count = array_length(_sector.signal_fragment_sockets);
+	for (var _fragment_index = 0; _fragment_index < _fragment_count; _fragment_index += 1) {
+		var _fragment = _sector.signal_fragment_sockets[_fragment_index];
+		var _is_collected = false;
+		for (var _collected_index = 0; _collected_index < array_length(_collected_ids); _collected_index += 1) {
+			if (_collected_ids[_collected_index] == _fragment.id) {
+				_is_collected = true;
+				break;
+			}
+		}
+		if (_is_collected) {
+			continue;
+		}
+
+		var _distance = point_distance(_x, _y, _fragment.x, _fragment.y);
+		if (_distance <= _range && _distance < _nearest_distance) {
+			_nearest_index = _fragment_index;
+			_nearest_distance = _distance;
+		}
+	}
+
+	return _nearest_index;
 }
 
 /// Finds the requested combat socket, returning noone when the role is absent.

@@ -88,6 +88,34 @@ for (var _pickup_index = 0; _pickup_index < _pickup_count; _pickup_index += 1) {
 	vertex_submit(pickup_meshes[_pickup.kind], pr_trianglelist, -1);
 }
 
+if (run_started && run_state != FPS_RUN_SUMMARY) {
+	var _fragment_count = array_length(sector.signal_fragment_sockets);
+	for (var _fragment_index = 0; _fragment_index < _fragment_count; _fragment_index += 1) {
+		var _fragment = sector.signal_fragment_sockets[_fragment_index];
+		if (fps_run_has_score_award(run_contract.signal_fragments_collected, _fragment.id)) {
+			continue;
+		}
+
+		var _fragment_height = 24 + 5 * dsin(pickup_spin + _fragment_index * 58);
+		var _fragment_angle = 45 + pickup_spin;
+		matrix_set(
+			matrix_world,
+			matrix_build(
+				_fragment.x,
+				_fragment.y,
+				_fragment_height,
+				0,
+				0,
+				_fragment_angle,
+				14,
+				14,
+				22
+			)
+		);
+		vertex_submit(signal_fragment_buffer, pr_trianglelist, -1);
+	}
+}
+
 var _enemy_count = instance_number(obj_fps_enemy);
 for (var _enemy_index = 0; _enemy_index < _enemy_count; _enemy_index += 1) {
 	var _enemy = instance_find(obj_fps_enemy, _enemy_index);

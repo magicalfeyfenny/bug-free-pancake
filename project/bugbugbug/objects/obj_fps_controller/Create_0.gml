@@ -18,6 +18,7 @@ wall_height = 200;
 wall_thickness = 24;
 
 sector_seed = fps_run_normalize_seed(FPS_SECTOR_DEFAULT_SEED);
+title_protocol = FPS_RUN_PROTOCOL_STANDARD;
 sector = fps_sector_generate(
 	sector_seed,
 	room_width,
@@ -34,7 +35,7 @@ lore_read = array_create(FPS_SECTOR_TILE_COUNT, false);
 lore_open = false;
 lore_index = -1;
 
-run_contract = fps_run_create_state(sector_seed);
+run_contract = fps_run_create_state(sector_seed, title_protocol);
 run_state = run_contract.phase;
 run_room_index = run_contract.room_index;
 seed_input = string(sector_seed);
@@ -73,6 +74,17 @@ sync_run_contract = method(id, function() {
 	run_room_index = run_contract.room_index;
 	room_complete = run_contract.room_complete;
 	global.fps_run_paused = run_state == FPS_RUN_PAUSED;
+});
+
+/// Changes the in-memory title selection without writing it to profile data.
+select_title_protocol = method(id, function(_protocol) {
+	if (run_state != FPS_RUN_TITLE) {
+		return false;
+	}
+
+	title_protocol = fps_run_normalize_protocol(_protocol);
+	run_contract.protocol = title_protocol;
+	return true;
 });
 
 /// Copies validated profile aim settings into the fields used by the next input frame.
@@ -253,7 +265,7 @@ spawn_room_encounter = method(id, function() {
 	for (var _entry_index = 0; _entry_index < _entry_count; _entry_index += 1) {
 		var _entry = encounter_plan.entries[_entry_index];
 		var _enemy = instance_create_layer(_entry.x, _entry.y, "Gameplay", obj_fps_enemy);
-		fps_enemy_apply_role(_enemy, _entry.kind);
+		fps_enemy_apply_role(_enemy, _entry.kind, run_contract.protocol);
 		_enemy.spawn_socket_id = _entry.socket_id;
 		_enemy.spawn_tile_index = _entry.tile_index;
 		_enemy.x = _entry.x;
@@ -277,11 +289,12 @@ spawn_room_encounter = method(id, function() {
 });
 
 /// Starts a fresh deterministic run and clears every run-scoped object and value.
-start_run = method(id, function(_seed) {
+start_run = method(id, function(_seed, _protocol) {
 	clear_room_instances();
 	apply_profile_settings();
 	sector_seed = fps_run_normalize_seed(_seed);
-	run_contract = fps_run_begin(sector_seed);
+	title_protocol = fps_run_normalize_protocol(_protocol);
+	run_contract = fps_run_begin(sector_seed, title_protocol);
 	sync_run_contract();
 	profile = fps_profile_record_run_started(profile);
 	fps_profile_save(profile);
@@ -394,7 +407,7 @@ show_title = method(id, function(_seed) {
 	dash = fps_dash_create_state();
 	phase = FPS_STATE_PLAYING;
 	seed_input = string(fps_run_normalize_seed(_seed));
-	run_contract = fps_run_create_state(real(seed_input));
+	run_contract = fps_run_create_state(real(seed_input), title_protocol);
 	sync_run_contract();
 	run_started = false;
 	profile_reset_confirm = false;

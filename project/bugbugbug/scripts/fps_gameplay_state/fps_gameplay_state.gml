@@ -308,9 +308,20 @@ function fps_enemy_role_name(_kind) {
 	return fps_enemy_role_definition(_kind).identity;
 }
 
+/// Keeps Overclock attack cadence in whole frames and floors the fixed 80% ratio.
+function fps_enemy_attack_delay_for_protocol(_base_delay, _protocol) {
+	if (fps_run_normalize_protocol(_protocol) != FPS_RUN_PROTOCOL_OVERCLOCK) {
+		return _base_delay;
+	}
+
+	// GML's div operator performs integer division, so positive frame counts floor exactly.
+	return max(1, (_base_delay * 4) div 5);
+}
+
 /// Applies one role contract to a newly created enemy instance.
-function fps_enemy_apply_role(_enemy, _kind) {
+function fps_enemy_apply_role(_enemy, _kind, _protocol = FPS_RUN_PROTOCOL_STANDARD) {
 	var _definition = fps_enemy_role_definition(_kind);
+	_enemy.run_protocol = fps_run_normalize_protocol(_protocol);
 	_enemy.enemy_kind = _kind;
 	_enemy.enemy_identity = _definition.identity;
 	_enemy.enemy_label = _definition.label;
@@ -321,8 +332,11 @@ function fps_enemy_apply_role(_enemy, _kind) {
 	_enemy.stop_distance = _definition.stop_distance;
 	_enemy.attack_range = _definition.attack_range;
 	_enemy.attack_damage = _definition.attack_damage;
-	_enemy.attack_delay = _definition.attack_delay;
-	_enemy.attack_cooldown = _definition.attack_delay;
+	_enemy.attack_delay = fps_enemy_attack_delay_for_protocol(
+		_definition.attack_delay,
+		_enemy.run_protocol
+	);
+	_enemy.attack_cooldown = _enemy.attack_delay;
 	_enemy.collision_radius = _definition.collision_radius;
 	_enemy.hit_sphere_height = _definition.hit_sphere_height;
 	_enemy.hit_sphere_radius = _definition.hit_sphere_radius;
@@ -367,7 +381,10 @@ function fps_enemy_apply_combat_phase(_enemy, _phase) {
 	_enemy.stop_distance = _phase_definition.stop_distance;
 	_enemy.attack_range = _phase_definition.attack_range;
 	_enemy.attack_damage = _phase_definition.attack_damage;
-	_enemy.attack_delay = _phase_definition.attack_delay;
+	_enemy.attack_delay = fps_enemy_attack_delay_for_protocol(
+		_phase_definition.attack_delay,
+		_enemy.run_protocol
+	);
 	_enemy.warning_radius = _phase_definition.warning_radius;
 	_enemy.warning_shape = _phase_definition.warning_shape;
 	_enemy.telegraph_max_frames = _phase_definition.telegraph_frames;

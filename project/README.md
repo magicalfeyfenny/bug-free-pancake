@@ -17,6 +17,7 @@ Controls:
 - `Esc`: pause or resume an active run; close a lore panel
 - `Enter`: begin the selected seed or confirm a summary action
 - `S`: edit the numeric seed; `N`: choose a random seed or return to the title with one
+- `P`: switch between `STANDARD` and `OVERCLOCK` on the title screen; `STANDARD` is the default
 - `C`: open title controls; use `Up`/`Down` to select, `Left`/`Right` to adjust, and `Enter` to toggle inversion
 - `A`: reread discovered archives from the title or summary; `X`: reset the profile after confirmation
 
@@ -34,9 +35,15 @@ victory or death summary show the collected count. During an active run, the
 route strip shows all six generated spaces in order;
 `CURRENT`, `CLEARED`, `NEXT`, and `FINALE` markers track the selected seed as
 rooms change.
-The active HUD and victory or death summary show the run score. Defeated roles
-award fixed points, each cleared generated space awards one room bonus, and the
-finale awards its bonus only on victory; restarting a seed resets the score.
+The active HUD and victory or death summary show the selected protocol and run
+score. `OVERCLOCK` uses 80% of each enemy attack delay, rounded down to a
+one-frame minimum, and multiplies enemy and room score awards by 1.5.
+`STANDARD` keeps the existing attack timings and score values. Protocol choice
+does not affect the generated sector or encounters, stays selected when a run
+restarts or returns to the title, and is not saved to the profile. Each new run
+resets its score and other run-scoped state. Defeated roles award points, each
+cleared generated space awards one room bonus, and the finale awards its bonus
+only on victory.
 Cleared combat spaces offer three deterministic reward cards. A versioned local
 profile records discoveries, victories, bounded unlocks, mouse sensitivity, and
 vertical-look inversion; legacy profile data migrates without losing discoveries,

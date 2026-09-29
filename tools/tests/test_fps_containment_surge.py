@@ -78,7 +78,14 @@ class FpsContainmentSurgeStructureTests(unittest.TestCase):
         surge_tick = self.controller_create.split(
             "tick_containment_surge = method(id, function()", 1
         )[1].split("\n});", 1)[0]
-        self.assertIn("|| room_complete", surge_tick)
+        guard, guarded_body = surge_tick.split(") {", 1)
+        self.assertIn("|| room_complete", guard)
+        early_return = guarded_body.split("\n\t}", 1)[0]
+        self.assertIn("return;", early_return)
+        self.assertLess(
+            surge_tick.index("return;"),
+            surge_tick.index("fps_containment_surge_tick(containment_surge_state);"),
+        )
 
     def test_world_and_hud_present_the_existing_runtime_marker(self):
         """The warning mesh and native HUD identify the active room hazard."""

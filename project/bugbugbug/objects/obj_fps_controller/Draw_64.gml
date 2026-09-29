@@ -63,21 +63,22 @@ if (loadout.overcharge_frames > 0) {
 	draw_text(40, 168, "OVERCHARGE  " + string(ceil(loadout.overcharge_frames / 60)) + "s");
 }
 draw_set_color(fps_dash_is_active(dash) ? make_color_rgb(255, 226, 150) : make_color_rgb(184, 199, 216));
-var _dash_status = fps_dash_is_active(dash)
-	? "PHASE DASH  PHASING"
-	: fps_dash_ready(dash)
-		? "PHASE DASH  READY [SPACE]"
-		: "PHASE DASH  RECHARGING " + string(ceil(dash.cooldown_frames / 60)) + "s";
+var _dash_status = "PHASE DASH  RECHARGING " + string(ceil(dash.cooldown_frames / 60)) + "s";
+if (fps_dash_is_active(dash)) {
+	_dash_status = "PHASE DASH  PHASING";
+} else if (fps_dash_ready(dash)) {
+	_dash_status = "PHASE DASH  READY [SPACE]";
+}
 draw_text(40, 188, _dash_status);
 
 if (run_state == FPS_RUN_PLAYING && is_struct(containment_surge) && is_struct(containment_surge_state)) {
-	draw_set_color(
-		containment_surge_state.phase == FPS_CONTAINMENT_SURGE_ACTIVE
-			? make_color_rgb(255, 104, 91)
-			: containment_surge_state.phase == FPS_CONTAINMENT_SURGE_WARNING
-				? make_color_rgb(255, 226, 150)
-				: make_color_rgb(184, 199, 216)
-	);
+	var _surge_color = make_color_rgb(184, 199, 216);
+	if (containment_surge_state.phase == FPS_CONTAINMENT_SURGE_ACTIVE) {
+		_surge_color = make_color_rgb(255, 104, 91);
+	} else if (containment_surge_state.phase == FPS_CONTAINMENT_SURGE_WARNING) {
+		_surge_color = make_color_rgb(255, 226, 150);
+	}
+	draw_set_color(_surge_color);
 	draw_text(40, 208, "CONTAINMENT SURGE  " + fps_containment_surge_phase_name(containment_surge_state.phase));
 }
 

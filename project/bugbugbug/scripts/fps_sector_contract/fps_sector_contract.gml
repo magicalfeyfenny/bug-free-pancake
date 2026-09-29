@@ -610,15 +610,19 @@ function fps_sector_route_entry(_tile, _current_index, _room_complete) {
 	var _is_cleared = _tile.index < _current_index;
 	var _is_next = _room_complete && _tile.index == _current_index + 1;
 	var _is_finale = _tile.role == FPS_SECTOR_ROLE_FINALE;
-	var _status = _is_current
-		? (_is_finale ? "CURRENT / FINALE" : "CURRENT")
-		: _is_cleared
-			? "CLEARED"
-			: _is_next
-				? (_is_finale ? "NEXT / FINALE" : "NEXT")
-				: _is_finale
-					? "FINALE"
-					: "AHEAD";
+	var _status = "AHEAD";
+	if (_is_finale) {
+		_status = "FINALE";
+	}
+	if (_is_next) {
+		_status = _is_finale ? "NEXT / FINALE" : "NEXT";
+	}
+	if (_is_cleared) {
+		_status = "CLEARED";
+	}
+	if (_is_current) {
+		_status = _is_finale ? "CURRENT / FINALE" : "CURRENT";
+	}
 
 	return {
 		id: _tile.id,

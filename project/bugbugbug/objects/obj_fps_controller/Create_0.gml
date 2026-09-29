@@ -244,9 +244,10 @@ clear_room_instances = method(id, function() {
 /// Selects and resets the hazard state for the current generated room.
 configure_containment_surge = method(id, function() {
 	containment_surge = fps_sector_containment_surge_for_tile(sector, run_room_index);
-	containment_surge_state = is_struct(containment_surge)
-		? fps_containment_surge_create_state(containment_surge.id)
-		: undefined;
+	containment_surge_state = undefined;
+	if (is_struct(containment_surge)) {
+		containment_surge_state = fps_containment_surge_create_state(containment_surge.id);
+	}
 });
 
 /// Advances the current room hazard and applies its one exposed hit per cycle.

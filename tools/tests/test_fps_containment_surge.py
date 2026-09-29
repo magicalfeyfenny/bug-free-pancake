@@ -62,7 +62,9 @@ class FpsContainmentSurgeStructureTests(unittest.TestCase):
         """Runtime damage uses canonical cover/dash gates and clears on reset."""
         for required in (
             "configure_containment_surge = method",
-            "containment_surge_state = is_struct(containment_surge)",
+            "containment_surge_state = undefined;",
+            "if (is_struct(containment_surge)) {",
+            "fps_containment_surge_create_state(containment_surge.id)",
             "fps_sector_containment_surge_exposed(sector, containment_surge, x, y)",
             "fps_dash_blocks_damage(dash)",
             "containment_surge_state = fps_containment_surge_mark_damaged(containment_surge_state);",

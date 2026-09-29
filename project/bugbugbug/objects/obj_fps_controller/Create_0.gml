@@ -255,6 +255,7 @@ tick_containment_surge = method(id, function() {
 	if (
 		run_state != FPS_RUN_PLAYING
 		|| phase != FPS_STATE_PLAYING
+		|| room_complete
 		|| !run_started
 		|| !is_struct(containment_surge)
 		|| !is_struct(containment_surge_state)

@@ -324,15 +324,17 @@ spawn_room_encounter = method(id, function() {
 	}
 });
 
-/// Starts a fresh deterministic run and clears every run-scoped object and value.
-start_run = method(id, function(_seed) {
+/// Starts a fresh deterministic run and optionally persists its profile update.
+start_run = method(id, function(_seed, _save_profile = true) {
 	clear_room_instances();
 	apply_profile_settings();
 	sector_seed = fps_run_normalize_seed(_seed);
 	run_contract = fps_run_begin(sector_seed);
 	sync_run_contract();
 	profile = fps_profile_record_run_started(profile);
-	fps_profile_save(profile);
+	if (_save_profile) {
+		fps_profile_save(profile);
+	}
 	max_health = fps_profile_starting_max_health(profile);
 	current_health = max_health;
 	phase = FPS_STATE_PLAYING;

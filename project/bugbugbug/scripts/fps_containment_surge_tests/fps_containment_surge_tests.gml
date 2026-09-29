@@ -70,21 +70,42 @@ suite(function() {
 
 suite(function() {
 	describe("Containment Surge controller integration", function() {
-		it("binds HUD state to the active room hazard and clears it on a safe-room transition", function() {
+		it("binds HUD state to the active hazard and clears it on safe-room and run-reset transitions", function() {
 			var _controller = instance_find(obj_fps_controller, 0);
 			var _previous_sector = _controller.sector;
+			var _previous_global_sector = global.fps_sector;
 			var _previous_sector_seed = _controller.sector_seed;
 			var _previous_contract = _controller.run_contract;
 			var _previous_phase = _controller.phase;
 			var _previous_run_started = _controller.run_started;
+			var _previous_profile = fps_profile_from_data(
+				fps_profile_to_data(_controller.profile)
+			);
+			var _previous_max_health = _controller.max_health;
 			var _previous_x = _controller.x;
 			var _previous_y = _controller.y;
 			var _previous_health = _controller.current_health;
+			var _previous_mouse_sensitivity = _controller.mouse_sensitivity;
+			var _previous_invert_vertical_look = _controller.invert_vertical_look;
+			var _previous_mouse_captured = _controller.mouse_captured;
+			var _previous_lore_read = _controller.lore_read;
+			var _previous_lore_open = _controller.lore_open;
+			var _previous_lore_index = _controller.lore_index;
+			var _previous_loadout = _controller.loadout;
+			var _previous_pickups = _controller.pickups;
+			var _previous_encounter_pressure = _controller.encounter_pressure;
+			var _previous_encounter_plan = _controller.encounter_plan;
 			var _previous_notice = _controller.pickup_notice;
 			var _previous_notice_frames = _controller.pickup_notice_frames;
+			var _previous_profile_status = _controller.profile_status;
+			var _previous_summary_reason = _controller.summary_reason;
+			var _previous_seed_input = _controller.seed_input;
 			var _previous_surge = _controller.containment_surge;
 			var _previous_surge_state = _controller.containment_surge_state;
 			var _previous_dash = _controller.dash;
+			var _previous_global_next_seed = variable_global_exists("fps_next_sector_seed")
+				? global.fps_next_sector_seed
+				: undefined;
 			var _sector = fps_sector_generate(13579, 1366, 768, 24, 200);
 			var _combat_tile_index = -1;
 			var _safe_tile_index = -1;
@@ -159,19 +180,56 @@ suite(function() {
 			expect(is_struct(_controller.containment_surge)).toBeFalsy();
 			expect(is_struct(_controller.containment_surge_state)).toBeFalsy();
 
+			// A real run restart must discard the prior room's active hazard state.
+			_controller.containment_surge = _combat_surge;
+			var _stale_surge_state = fps_containment_surge_create_state(_combat_surge.id);
+			_stale_surge_state.phase = FPS_CONTAINMENT_SURGE_ACTIVE;
+			_stale_surge_state.cycle_index = 2;
+			_controller.containment_surge_state = _stale_surge_state;
+			_controller.start_run(24680, false);
+			expect(_controller.sector_seed).toBe(24680);
+			expect(_controller.run_contract.seed).toBe(24680);
+			expect(_controller.run_room_index).toBe(0);
+			expect(_controller.run_started).toBeTruthy();
+			expect(is_struct(_controller.containment_surge)).toBeFalsy();
+			expect(is_struct(_controller.containment_surge_state)).toBeFalsy();
+			_controller.clear_room_instances();
+
 			_controller.sector = _previous_sector;
+			global.fps_sector = _previous_global_sector;
 			_controller.sector_seed = _previous_sector_seed;
 			_controller.run_contract = _previous_contract;
 			_controller.phase = _previous_phase;
 			_controller.run_started = _previous_run_started;
+			_controller.profile = _previous_profile;
+			_controller.max_health = _previous_max_health;
 			_controller.x = _previous_x;
 			_controller.y = _previous_y;
 			_controller.current_health = _previous_health;
+			_controller.mouse_sensitivity = _previous_mouse_sensitivity;
+			_controller.invert_vertical_look = _previous_invert_vertical_look;
+			_controller.lore_read = _previous_lore_read;
+			_controller.lore_open = _previous_lore_open;
+			_controller.lore_index = _previous_lore_index;
+			_controller.loadout = _previous_loadout;
+			_controller.pickups = _previous_pickups;
+			_controller.encounter_pressure = _previous_encounter_pressure;
+			_controller.encounter_plan = _previous_encounter_plan;
 			_controller.pickup_notice = _previous_notice;
 			_controller.pickup_notice_frames = _previous_notice_frames;
+			_controller.profile_status = _previous_profile_status;
+			_controller.summary_reason = _previous_summary_reason;
+			_controller.seed_input = _previous_seed_input;
 			_controller.containment_surge = _previous_surge;
 			_controller.containment_surge_state = _previous_surge_state;
 			_controller.dash = _previous_dash;
+			global.fps_next_sector_seed = _previous_global_next_seed;
+			vertex_delete_buffer(_controller.arena_buffer);
+			_controller.arena_buffer = fps_build_sector_buffer(
+				_controller.geometry_format,
+				_controller.sector
+			);
+			_controller.set_mouse_capture(_previous_mouse_captured);
 			_controller.sync_run_contract();
 		});
 	});

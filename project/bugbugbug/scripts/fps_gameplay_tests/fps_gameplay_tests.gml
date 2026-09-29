@@ -606,8 +606,9 @@ suite(function() {
 			expect(_first_plan.signature).toBe(_repeat_plan.signature);
 			expect(_first_plan.signature != _different_plan.signature).toBeTruthy();
 
-			var _first_choices = fps_run_create_reward_choices(314159, 2, _profile);
-			var _repeat_choices = fps_run_create_reward_choices(314159, 2, _profile);
+			var _choice_loadout = fps_weapon_create_loadout();
+			var _first_choices = fps_run_create_reward_choices(314159, 2, _profile, _choice_loadout);
+			var _repeat_choices = fps_run_create_reward_choices(314159, 2, _profile, _choice_loadout);
 			expect(fps_run_reward_signature(_first_choices)).toBe(fps_run_reward_signature(_repeat_choices));
 			expect(array_length(_first_choices)).toBe(FPS_RUN_REWARD_LIMIT);
 		});

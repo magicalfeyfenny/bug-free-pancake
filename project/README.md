@@ -43,7 +43,10 @@ vertical-look inversion; legacy profile data migrates without losing discoveries
 victories, or unlock ownership, while unsupported or corrupt data falls back to
 safe defaults.
 The Pulse Rifle, Scatter Cannon, Burst Carbine, and Rail Lance trade firing
-pattern, reach, cadence, and ammunition differently. Six optional archive
+pattern, reach, cadence, and ammunition differently. A CALIBRATION reward can
+give the equipped weapon 10% more damage for that run, and its HUD entry stays
+marked after switching weapons. Selecting it once removes it from later reward
+choices. Six optional archive
 entries explain the facility, assignment, breach, hostiles, shifting sectors,
 and signal core. Clear the mixed encounters and durable finale threat to
 secure the run. The finale Titan begins in the named AWAKENING phase and

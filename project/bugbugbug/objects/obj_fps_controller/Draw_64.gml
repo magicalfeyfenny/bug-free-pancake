@@ -22,7 +22,12 @@ draw_text(40, 34, "VITALS  " + string(current_health) + " / " + string(max_healt
 var _current_definition = fps_weapon_current_definition(loadout);
 var _current_state = fps_weapon_current_state(loadout);
 draw_set_color(_current_definition.colour);
-draw_text(40, 88, _current_definition.label + "  [" + string(loadout.current_index + 1) + "]");
+draw_text(
+	40,
+	88,
+	_current_definition.label + "  [" + string(loadout.current_index + 1) + "]"
+		+ (_current_state.calibrated ? "  CALIBRATED" : "")
+);
 draw_set_color(c_white);
 draw_text(
 	40,
@@ -46,7 +51,11 @@ var _weapon_strip = "";
 for (var _weapon_index = 0; _weapon_index < FPS_WEAPON_COUNT; _weapon_index += 1) {
 	var _weapon_state = loadout.states[_weapon_index];
 	var _weapon_definition = fps_weapon_definition(_weapon_index);
-	_weapon_strip += (_weapon_state.owned ? string(_weapon_index + 1) + ":" + _weapon_definition.identity : string(_weapon_index + 1) + ":LOCKED") + "   ";
+	_weapon_strip += (
+		(_weapon_state.owned ? string(_weapon_index + 1) + ":" + _weapon_definition.identity : string(_weapon_index + 1) + ":LOCKED")
+		+ (_weapon_state.calibrated ? " [CALIBRATED]" : "")
+		+ "   "
+	);
 }
 draw_text(40, 148, _weapon_strip);
 if (loadout.overcharge_frames > 0) {

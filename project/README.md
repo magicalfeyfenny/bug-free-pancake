@@ -13,7 +13,7 @@ Controls:
 - Left click: fire the equipped weapon
 - `1`-`4` or `Q`: switch among acquired weapons
 - `R`: reload during play; restart the current seed after a summary
-- `E`: collect a nearby supply cache, read an archive entry, close the archive panel, or enter the next space
+- `E`: collect a nearby supply cache or Signal Fragment, read an archive entry, close the archive panel, or enter the next space
 - `Esc`: pause or resume an active run; close a lore panel
 - `Enter`: begin the selected seed or confirm a summary action
 - `S`: edit the numeric seed; `N`: choose a random seed or return to the title with one
@@ -33,8 +33,11 @@ points once.
 The generated sector uses six aligned start, connector, combat, safe, archive,
 and finale spaces. Its solids are shared by rendering, actor movement,
 projectile travel, and hitscan occlusion. Each seed places three weapon caches,
-med gel, an ammo cell, and a temporary overcharge in clear tile positions.
-During an active run, the route strip shows all six generated spaces in order;
+med gel, an ammo cell, and a temporary overcharge in clear tile positions. Each
+run also places one optional Signal Fragment in each of the three shuffled
+middle spaces. Collecting each fragment once adds 75 points; the active HUD and
+victory or death summary show the collected count. During an active run, the
+route strip shows all six generated spaces in order;
 `CURRENT`, `CLEARED`, `NEXT`, and `FINALE` markers track the selected seed as
 rooms change.
 The active HUD and victory or death summary show the run score. Defeated roles
@@ -46,7 +49,10 @@ vertical-look inversion; legacy profile data migrates without losing discoveries
 victories, or unlock ownership, while unsupported or corrupt data falls back to
 safe defaults.
 The Pulse Rifle, Scatter Cannon, Burst Carbine, and Rail Lance trade firing
-pattern, reach, cadence, and ammunition differently. Six optional archive
+pattern, reach, cadence, and ammunition differently. A CALIBRATION reward can
+give the equipped weapon 10% more damage for that run, and its HUD entry stays
+marked after switching weapons. Selecting it once removes it from later reward
+choices. Six optional archive
 entries explain the facility, assignment, breach, hostiles, shifting sectors,
 and signal core. Clear the mixed encounters and durable finale threat to
 secure the run. The finale Titan begins in the named AWAKENING phase and

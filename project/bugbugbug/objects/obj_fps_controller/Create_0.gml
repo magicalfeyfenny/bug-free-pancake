@@ -207,7 +207,9 @@ pause_run = method(id, function() {
 		return false;
 	}
 
-	run_contract = fps_run_pause(run_contract);
+	if (!fps_run_pause(run_contract)) {
+		return false;
+	}
 	sync_run_contract();
 	set_mouse_capture(false);
 	return true;
@@ -219,7 +221,9 @@ resume_run = method(id, function() {
 		return false;
 	}
 
-	run_contract = fps_run_resume(run_contract);
+	if (!fps_run_resume(run_contract)) {
+		return false;
+	}
 	sync_run_contract();
 	set_mouse_capture(true);
 	return true;

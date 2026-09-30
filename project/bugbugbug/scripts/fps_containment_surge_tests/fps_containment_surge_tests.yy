@@ -1,0 +1,13 @@
+{
+  "$GMScript":"v1",
+  "%Name":"fps_containment_surge_tests",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"fps_containment_surge_tests",
+  "parent":{
+    "name":"Gameplay",
+    "path":"folders/Gameplay.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}

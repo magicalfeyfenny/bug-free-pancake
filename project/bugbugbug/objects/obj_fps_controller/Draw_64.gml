@@ -63,12 +63,24 @@ if (loadout.overcharge_frames > 0) {
 	draw_text(40, 168, "OVERCHARGE  " + string(ceil(loadout.overcharge_frames / 60)) + "s");
 }
 draw_set_color(fps_dash_is_active(dash) ? make_color_rgb(255, 226, 150) : make_color_rgb(184, 199, 216));
-var _dash_status = fps_dash_is_active(dash)
-	? "PHASE DASH  PHASING"
-	: fps_dash_ready(dash)
-		? "PHASE DASH  READY [SPACE]"
-		: "PHASE DASH  RECHARGING " + string(ceil(dash.cooldown_frames / 60)) + "s";
+var _dash_status = "PHASE DASH  RECHARGING " + string(ceil(dash.cooldown_frames / 60)) + "s";
+if (fps_dash_is_active(dash)) {
+	_dash_status = "PHASE DASH  PHASING";
+} else if (fps_dash_ready(dash)) {
+	_dash_status = "PHASE DASH  READY [SPACE]";
+}
 draw_text(40, 188, _dash_status);
+
+if (run_state == FPS_RUN_PLAYING && is_struct(containment_surge) && is_struct(containment_surge_state)) {
+	var _surge_color = make_color_rgb(184, 199, 216);
+	if (containment_surge_state.phase == FPS_CONTAINMENT_SURGE_ACTIVE) {
+		_surge_color = make_color_rgb(255, 104, 91);
+	} else if (containment_surge_state.phase == FPS_CONTAINMENT_SURGE_WARNING) {
+		_surge_color = make_color_rgb(255, 226, 150);
+	}
+	draw_set_color(_surge_color);
+	draw_text(40, 208, "CONTAINMENT SURGE  " + fps_containment_surge_phase_name(containment_surge_state.phase));
+}
 
 var _tile_index = fps_sector_tile_at(sector, x, y);
 var _tile_label = _tile_index >= 0 ? sector.tiles[_tile_index].role_name : "TRANSIT";
@@ -112,15 +124,16 @@ if (run_state == FPS_RUN_PLAYING) {
 		var _route_entry = _route_entries[_route_index];
 		var _card_left = _route_left + _route_index * (_route_card_width + _route_gap);
 		var _card_right = _card_left + _route_card_width;
-		var _marker_colour = _route_entry.is_current
-			? make_color_rgb(255, 226, 150)
-			: _route_entry.is_next
-				? make_color_rgb(118, 224, 255)
-				: _route_entry.is_finale
-					? make_color_rgb(189, 120, 255)
-					: _route_entry.is_cleared
-						? make_color_rgb(98, 255, 176)
-						: make_color_rgb(103, 118, 136);
+		var _marker_colour = make_color_rgb(103, 118, 136);
+		if (_route_entry.is_current) {
+			_marker_colour = make_color_rgb(255, 226, 150);
+		} else if (_route_entry.is_next) {
+			_marker_colour = make_color_rgb(118, 224, 255);
+		} else if (_route_entry.is_finale) {
+			_marker_colour = make_color_rgb(189, 120, 255);
+		} else if (_route_entry.is_cleared) {
+			_marker_colour = make_color_rgb(98, 255, 176);
+		}
 
 		draw_set_color(make_color_rgb(14, 29, 43));
 		draw_rectangle(_card_left, _route_top, _card_right, _route_top + 52, false);

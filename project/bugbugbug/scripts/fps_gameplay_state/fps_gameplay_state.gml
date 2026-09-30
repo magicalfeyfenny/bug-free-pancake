@@ -24,6 +24,83 @@
 #macro FPS_RANGED_MODE_EVADE 0
 #macro FPS_RANGED_MODE_ATTACK 1
 
+#macro FPS_CONTAINMENT_SURGE_IDLE 0
+#macro FPS_CONTAINMENT_SURGE_WARNING 1
+#macro FPS_CONTAINMENT_SURGE_ACTIVE 2
+#macro FPS_CONTAINMENT_SURGE_IDLE_FRAMES 90
+#macro FPS_CONTAINMENT_SURGE_WARNING_FRAMES 45
+#macro FPS_CONTAINMENT_SURGE_ACTIVE_FRAMES 30
+#macro FPS_CONTAINMENT_SURGE_DAMAGE 12
+
+/// Returns the readable state used by the hazard HUD and notices.
+function fps_containment_surge_phase_name(_phase) {
+	switch (_phase) {
+		case FPS_CONTAINMENT_SURGE_IDLE: return "IDLE";
+		case FPS_CONTAINMENT_SURGE_WARNING: return "WARNING";
+		case FPS_CONTAINMENT_SURGE_ACTIVE: return "ACTIVE";
+	}
+
+	return "UNKNOWN";
+}
+
+/// Creates a room-scoped cycle that can be discarded on every room or run reset.
+function fps_containment_surge_create_state(_surge_id) {
+	return {
+		surge_id: _surge_id,
+		phase: FPS_CONTAINMENT_SURGE_IDLE,
+		phase_frames: FPS_CONTAINMENT_SURGE_IDLE_FRAMES,
+		cycle_index: 0,
+		damage_cycle: -1,
+	};
+}
+
+/// Advances the fixed IDLE, WARNING, ACTIVE cycle without using global random state.
+function fps_containment_surge_tick(_state) {
+	if (!is_struct(_state)) {
+		return _state;
+	}
+
+	_state.phase_frames = max(0, _state.phase_frames - 1);
+	if (_state.phase_frames > 0) {
+		return _state;
+	}
+
+	switch (_state.phase) {
+		case FPS_CONTAINMENT_SURGE_IDLE:
+			_state.phase = FPS_CONTAINMENT_SURGE_WARNING;
+			_state.phase_frames = FPS_CONTAINMENT_SURGE_WARNING_FRAMES;
+			break;
+		case FPS_CONTAINMENT_SURGE_WARNING:
+			_state.phase = FPS_CONTAINMENT_SURGE_ACTIVE;
+			_state.phase_frames = FPS_CONTAINMENT_SURGE_ACTIVE_FRAMES;
+			break;
+		default:
+			_state.phase = FPS_CONTAINMENT_SURGE_IDLE;
+			_state.phase_frames = FPS_CONTAINMENT_SURGE_IDLE_FRAMES;
+			_state.cycle_index += 1;
+			_state.damage_cycle = -1;
+			break;
+	}
+
+	return _state;
+}
+
+/// Allows one damage event for each active cycle until it is marked consumed.
+function fps_containment_surge_can_damage(_state) {
+	return is_struct(_state)
+		&& _state.phase == FPS_CONTAINMENT_SURGE_ACTIVE
+		&& _state.damage_cycle != _state.cycle_index;
+}
+
+/// Records the current cycle after its one permitted damage event.
+function fps_containment_surge_mark_damaged(_state) {
+	if (is_struct(_state)) {
+		_state.damage_cycle = _state.cycle_index;
+	}
+
+	return _state;
+}
+
 /// Returns a fresh encounter state for startup and restart tests.
 function fps_create_encounter_state() {
 	return {

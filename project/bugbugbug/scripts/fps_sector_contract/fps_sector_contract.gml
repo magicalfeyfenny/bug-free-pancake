@@ -12,6 +12,7 @@
 #macro FPS_SECTOR_DEFAULT_SEED 20260905
 #macro FPS_SECTOR_SEED_MODULUS 2147483647
 #macro FPS_SECTOR_DOOR_HALF_HEIGHT 112
+#macro FPS_SECTOR_CONTAINMENT_SURGE_RADIUS 64
 
 /// Returns the stable role name used by the sector HUD and test diagnostics.
 function fps_sector_role_name(_role) {
@@ -318,6 +319,30 @@ function fps_sector_first_clear_point(_sector, _candidates, _radius) {
 	return {x: _fallback[0], y: _fallback[1]};
 }
 
+/// Creates the one deterministic environmental hazard assigned to a combat tile.
+function fps_sector_make_containment_surge(_sector, _tile) {
+	var _candidates = [
+		[_tile.center_x, _tile.center_y],
+		[_tile.center_x - 64, _tile.center_y],
+		[_tile.center_x + 64, _tile.center_y],
+		[_tile.center_x, _tile.center_y - 128],
+		[_tile.center_x, _tile.center_y + 128],
+	];
+	var _point = fps_sector_first_clear_point(
+		_sector,
+		_candidates,
+		FPS_SECTOR_CONTAINMENT_SURGE_RADIUS
+	);
+
+	return {
+		id: "containment-surge-" + string(_tile.index + 1),
+		tile_index: _tile.index,
+		x: _point.x,
+		y: _point.y,
+		radius: FPS_SECTOR_CONTAINMENT_SURGE_RADIUS,
+	};
+}
+
 /// Keeps generated sockets clear of solids and every previously declared socket.
 function fps_sector_socket_position_is_available(_sector, _x, _y, _radius) {
 	if (!fps_sector_position_is_clear(_sector, _x, _y, _radius)) {
@@ -516,6 +541,7 @@ function fps_sector_generate(_seed, _width, _height, _wall_thickness, _wall_heig
 		start_socket: undefined,
 		exit_socket: undefined,
 		combat_sockets: [],
+		containment_surges: [],
 		signal_fragment_sockets: [],
 	};
 
@@ -557,6 +583,10 @@ function fps_sector_generate(_seed, _width, _height, _wall_thickness, _wall_heig
 			fps_sector_add_enemy_sockets(_sector, _socket_tile);
 		}
 
+		if (_socket_tile.role == FPS_SECTOR_ROLE_COMBAT) {
+			array_push(_sector.containment_surges, fps_sector_make_containment_surge(_sector, _socket_tile));
+		}
+
 		if (_socket_tile.role == FPS_SECTOR_ROLE_FINALE) {
 			var _exit_candidates = [
 				[_socket_tile.right - 72, _socket_tile.center_y],
@@ -580,15 +610,19 @@ function fps_sector_route_entry(_tile, _current_index, _room_complete) {
 	var _is_cleared = _tile.index < _current_index;
 	var _is_next = _room_complete && _tile.index == _current_index + 1;
 	var _is_finale = _tile.role == FPS_SECTOR_ROLE_FINALE;
-	var _status = _is_current
-		? (_is_finale ? "CURRENT / FINALE" : "CURRENT")
-		: _is_cleared
-			? "CLEARED"
-			: _is_next
-				? (_is_finale ? "NEXT / FINALE" : "NEXT")
-				: _is_finale
-					? "FINALE"
-					: "AHEAD";
+	var _status = "AHEAD";
+	if (_is_finale) {
+		_status = "FINALE";
+	}
+	if (_is_next) {
+		_status = _is_finale ? "NEXT / FINALE" : "NEXT";
+	}
+	if (_is_cleared) {
+		_status = "CLEARED";
+	}
+	if (_is_current) {
+		_status = _is_finale ? "CURRENT / FINALE" : "CURRENT";
+	}
 
 	return {
 		id: _tile.id,
@@ -625,6 +659,31 @@ function fps_sector_tile_at(_sector, _x, _y) {
 	}
 
 	return -1;
+}
+
+/// Returns the combat hazard assigned to a tile, or undefined for every other role.
+function fps_sector_containment_surge_for_tile(_sector, _tile_index) {
+	var _surge_count = array_length(_sector.containment_surges);
+	for (var _surge_index = 0; _surge_index < _surge_count; _surge_index += 1) {
+		var _surge = _sector.containment_surges[_surge_index];
+		if (_surge.tile_index == _tile_index) {
+			return _surge;
+		}
+	}
+
+	return undefined;
+}
+
+/// Tests the circular active footprint without creating a second collision representation.
+function fps_sector_containment_surge_contains(_surge, _x, _y) {
+	return is_struct(_surge)
+		&& point_distance(_surge.x, _surge.y, _x, _y) <= _surge.radius;
+}
+
+/// Reuses canonical sector solids to decide whether the hazard source is exposed.
+function fps_sector_containment_surge_exposed(_sector, _surge, _x, _y) {
+	return is_struct(_surge)
+		&& !fps_sector_line_blocked(_sector, _surge.x, _surge.y, _x, _y);
 }
 
 /// Finds a lore socket within the player's interaction range.
